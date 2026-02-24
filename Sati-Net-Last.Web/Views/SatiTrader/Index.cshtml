@@ -1,0 +1,21 @@
+@* filepath: C:\vsprojs\Sati-Net-Last\Views\SatiTrader\Index.cshtml *@
+@{
+    ViewData["Title"] = "Sati Trader";
+}
+
+<div class="satitrader-container">
+    <h2>Sati Trader - Gráfico en Tiempo Real</h2>
+    <p>Gráfico tipo Bitfinex (velas, SMA, volumen, zoom/pan)</p>
+
+    <hr />
+
+    <div id="traderChartContainer" style="width:900px;height:500px;background:#181a20;margin-top:20px;"></div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            initSatiTrader();
+        });
+    </script>
+}

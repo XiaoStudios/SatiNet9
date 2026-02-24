@@ -1,0 +1,99 @@
+using Microsoft.AspNetCore.Mvc;
+
+namespace Sati_Net_Last.Web.Controllers;
+
+public class HistoryMTController : Controller
+{
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<HistoryMTController> _logger;
+
+    public HistoryMTController(IHttpClientFactory httpClientFactory, ILogger<HistoryMTController> logger)
+    {
+        _httpClientFactory = httpClientFactory;
+        _logger = logger;
+    }
+
+    public async Task<IActionResult> Index()
+    {
+        var symbols = new List<string>();
+        
+        try
+        {
+            var client = _httpClientFactory.CreateClient("BackendAPI");
+            Console.WriteLine($"Requesting symbol list from API at {client.BaseAddress}");
+            var response = await client.GetAsync("api/MetaTrader/GetSymbolList");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                symbols = await response.Content.ReadFromJsonAsync<List<string>>() ?? new List<string>();
+            }
+            else
+            {
+                _logger.LogWarning($"API returned {response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al cargar la lista de símbolos");
+        }
+
+        ViewBag.Symbols = symbols;
+        return View();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetDatePriceHistory(DateTime dateFilter, string symbolStr, int wamPeriod)
+    {
+        try
+        {
+            var client = _httpClientFactory.CreateClient("BackendAPI");
+            var response = await client.GetAsync($"api/MetaTrader/GetDatePriceHistory?dateFilter={dateFilter:yyyy-MM-dd}&symbolStr={symbolStr}&wamPeriod={wamPeriod}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var data = await response.Content.ReadFromJsonAsync<object>();
+                return Ok(data);
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogWarning($"API returned {response.StatusCode}: {errorContent}");
+                return StatusCode((int)response.StatusCode, errorContent);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener el historial de precios por fecha");
+            return StatusCode(500, "Error al cargar el historial de precios desde el API");
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetDatePriceHistoryExcel(DateTime dateFilter, string symbolStr, int wamPeriod)
+    {
+        try
+        {
+            var client = _httpClientFactory.CreateClient("BackendAPI");
+            var response = await client.GetAsync($"api/MetaTrader/GetDatePriceHistoryExcel?dateFilter={dateFilter:yyyy-MM-dd}&symbolStr={symbolStr}&wamPeriod={wamPeriod}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var fileBytes = await response.Content.ReadAsByteArrayAsync();
+                var fileName = $"Historial_{symbolStr}_{dateFilter:yyyyMMdd}.xlsx";
+                
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogWarning($"API returned {response.StatusCode}: {errorContent}");
+                return StatusCode((int)response.StatusCode, errorContent);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener el historial de precios por fecha");
+            return StatusCode(500, "Error al cargar el historial de precios desde el API");
+        }
+    }
+}

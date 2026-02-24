@@ -1,0 +1,543 @@
+using System.Collections;
+using System.Threading.Tasks;
+using Sati_Models.DTOs;
+using Microsoft.AspNetCore.SignalR;
+using MTsocketAPI.MT5;
+using Sati_Net_Last.API.Hubs;
+using Sati_Net_Last.API.MTRepositories.Interfaces;
+using OfficeOpenXml; // Asegúrate de tener EPPlus instalado
+using OfficeOpenXml.Style;
+using System.IO;
+using Microsoft.EntityFrameworkCore;
+
+namespace Sati_Net_Last.API.MTRepositories;
+
+public class MTRepo : IMTRepo
+{
+    private readonly IHubContext<MetaTraderHub> _mtHubContext;
+    private readonly SatiDevContext _satiDevContext;
+    private readonly ILogger<MTRepo> _logger; // ✅ Agregar ILogger
+    public TerminalRepo _terminalRepo;
+
+    public MTRepo
+    (
+        IHubContext<MetaTraderHub> mtHubContext,
+        SatiDevContext satiDevContext,
+        TerminalRepo terminalRepo,
+        ILogger<MTRepo> logger // ✅ Inyectar logger
+    )
+    {
+        _mtHubContext = mtHubContext;
+        _satiDevContext = satiDevContext;
+        _terminalRepo = terminalRepo;
+        _logger = logger;
+    }
+
+    public async Task ConnectToMetaTrader()
+    {
+        try
+        {
+            _logger.LogInformation("Attempting to connect to MetaTrader...");
+            _logger.LogInformation(_terminalRepo.GetTerminal() == null ? "Terminal is null." : "Terminal instance exists.");
+            // if (_terminalRepo.GetTerminal() != null)
+            // {
+            //     _logger.LogInformation("Already connected to MetaTrader.");
+            //     return;
+            // }
+
+            // _terminal = new Terminal();
+            // _terminal.OnPrice += Mt5_OnPrice;
+            // _terminal.Connect();
+
+            if (_terminalRepo.GetTerminal().Connect())
+            {
+                _logger.LogInformation($"Connect failed. MTsocketAPI is currently running => {_terminalRepo.GetTerminal().Connect()}");
+                return;
+            }
+
+            // if (_terminal.Connect())
+            // {
+            //     await _mtHubContext.Clients.All.SendAsync("ReceiveMetaTraderLogin", "Connected to MetaTrader successfully.");
+            //     _logger.LogInformation(_terminal.GetSymbolList().Where(x => x.TRADE_MODE != 0).Select(x => x.NAME).ToList());
+            //     _terminal.TrackPrices(new List<string>() { "EURUSD" });
+            // }
+
+            // if (mt5 != null)
+            // {
+            //     var rates = mt5.PriceHistory(cmbSymbols.Text, tf, DateTime.Now.AddHours(-12).AddMinutes(-TimeSpanFromTF(tf).TotalMinutes * 30), DateTime.Now.AddDays(1));
+
+            //     foreach (var item in rates)
+            //     {
+            //         ScottPlot.OHLC candle = new OHLC(open: item.OPEN, high: item.HIGH, low: item.LOW, close: item.CLOSE, Convert.ToDateTime(item.TIME), TimeSpanFromTF(tf));
+            //         prices.Add(candle);
+            //     }
+
+            //     prices.Reverse();
+
+            //     fnplot = formsPlot1.Plot.AddCandlesticks(prices.ToArray());
+            //     fnplot.YAxisIndex = formsPlot1.Plot.RightAxis.AxisIndex;
+
+            //     mt5.TrackPrices(new List<string>() { cmbSymbols.Text });
+
+            //     formsPlot1.Plot.AxisAuto();
+            //     formsPlot1.Refresh();
+            // }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Please check that MTsocketAPI is running. \nError: " + ex.Message);
+            // Application.Exit();
+        }
+    }
+
+    public List<string> GetSymbolList()
+    {
+        if (_terminalRepo == null)
+            return new List<string>();
+
+        var symbols = _terminalRepo.GetTerminal().GetSymbolList();
+        // _logger.LogInformation($"Symbols retrieved: {symbols.Count} symbols.");
+        return symbols.Where(x => x.TRADE_MODE != 0).Select(x => x.NAME).ToList();
+    }
+
+    public List<Rates> GetPriceHistory()
+    {
+        var rates = new List<Rates>();
+
+        try
+        {
+            if (_terminalRepo == null)
+                return rates;
+
+            var timeFrameHistory = (TimeFrame)Enum.Parse(typeof(TimeFrame), "PERIOD_M1");
+
+            // rates = _terminal.PriceHistory
+            // (
+            //     "EURUSD",
+            //     timeFrameHistory,
+            //     DateTime.Now.AddHours(-48).AddMinutes(-TimeSpanFromTF(timeFrameHistory).TotalMinutes * 30),
+            //     DateTime.Now.AddDays(1)
+            // );
+
+            var startDate = DateTime.UtcNow.Date; // medianoche UTC de hoy
+            var endDate = DateTime.UtcNow.AddHours(2);        // ahora UTC mas 2 horas de metatrader (hora europa utc + 2)
+                                                              //MetaTrader 5 usa la hora del servidor de trading (broker), que normalmente es hora de Europa del Este (EET/UTC+2) o la zona horaria del broker, no la hora local de tu PC ni UTC
+
+            rates = new List<Rates>();
+            rates = _terminalRepo.GetPriceHistory("EURUSD", timeFrameHistory, startDate, endDate);
+
+            _logger.LogInformation($"****Price history retrieved: {rates.Count} records. with {startDate} {endDate}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Error retrieving price history: " + ex.Message);
+        }
+
+        return rates;
+    }
+
+    public async Task<List<Rates>> GetDatePriceHistoryAsync(DateTime dateFilter, string symbolStr, int wamPeriod)
+    {
+        var rateLst = new List<Rates>();
+
+        try
+        {
+            // ✅ Validaciones
+            if (_terminalRepo == null)
+            {
+                _logger.LogError("ERROR: TerminalRepo es null");
+                return rateLst;
+            }
+
+            if (string.IsNullOrWhiteSpace(symbolStr))
+            {
+                _logger.LogError("ERROR: Symbol es requerido");
+                return rateLst;
+            }
+
+            if (wamPeriod != 20 && wamPeriod != 50)
+            {
+                _logger.LogWarning($"WARNING: wamPeriod={wamPeriod} no es estándar (20 o 50)");
+            }
+
+            string fechaFiltro = dateFilter.Date.ToString("yyyy.MM.dd");
+
+            // 1. ✅ Consulta asíncrona a la base de datos
+            var datosExistentes = await _satiDevContext.Rates
+                .Where(r => r.Fecha == fechaFiltro && r.SymbolStr == symbolStr)
+                .OrderBy(r => r.Time)
+                .ToListAsync(); // ✅ Async
+
+            if (datosExistentes != null && datosExistentes.Count > 0)
+            {
+                _logger.LogInformation($"✓ Datos obtenidos de DB: {datosExistentes.Count} registros para {symbolStr} en {fechaFiltro}");
+
+                rateLst = datosExistentes.Select(dto => new Rates
+                {
+                    TIME = dto.Time,
+                    OPEN = dto.Open,
+                    HIGH = dto.High,
+                    LOW = dto.Low,
+                    CLOSE = dto.Close,
+                    TICK_VOLUME = dto.TickVolume,
+                    SPREAD = dto.Spread,
+                    REAL_VOLUME = dto.RealVolume
+                }).ToList();
+            }
+            else
+            {
+                _logger.LogWarning($"⚠ No hay datos en DB, consultando MetaTrader...");
+
+                var timeFrameHistory = TimeFrame.PERIOD_M1;
+                var startDate = dateFilter.Date;
+                var endDate = startDate.AddDays(1);
+
+                var result = _terminalRepo.GetPriceHistory(symbolStr, timeFrameHistory, startDate, endDate);
+
+                if (result == null || result.Count == 0)
+                {
+                    _logger.LogWarning($"⚠ MetaTrader no devolvió datos para {symbolStr} en {fechaFiltro}");
+                    return rateLst;
+                }
+
+                _logger.LogInformation($"✓ Datos obtenidos de MetaTrader: {result.Count} registros");
+
+                rateLst = result.OrderBy(x => x.TIME).ToList();
+
+                // 3. ✅ Guardar asíncronamente en la base de datos
+                try
+                {
+                    foreach (var rate in rateLst)
+                    {
+                        string fecha = "";
+                        string hora = "";
+
+                        if (!string.IsNullOrEmpty(rate.TIME))
+                        {
+                            var parts = rate.TIME.Split(' ');
+                            if (parts.Length == 2)
+                            {
+                                fecha = parts[0];
+                                hora = parts[1];
+                            }
+                        }
+
+                        await _satiDevContext.Rates.AddAsync(new RateDto // ✅ AddAsync
+                        {
+                            Time = rate.TIME,
+                            Open = rate.OPEN,
+                            High = rate.HIGH,
+                            Low = rate.LOW,
+                            Close = rate.CLOSE,
+                            TickVolume = rate.TICK_VOLUME,
+                            Spread = rate.SPREAD,
+                            RealVolume = rate.REAL_VOLUME,
+                            SymbolStr = symbolStr,
+                            Time_MT_Api = rate.TIME_MTAPI,
+                            Fecha = fecha,
+                            Hora = hora
+                        });
+                    }
+
+                    await _satiDevContext.SaveChangesAsync(); // ✅ Async
+                    _logger.LogInformation($"✓ Guardados {rateLst.Count} registros en DB");
+                }
+                catch (Exception dbEx)
+                {
+                    _logger.LogError(dbEx, "ERROR al guardar en DB");
+                    // Continuar sin guardar, pero devolver los datos
+                }
+            }
+
+            // 4. Calcular WMA
+            if (rateLst.Count > 0)
+            {
+                int requiredPeriod = wamPeriod + 1;
+                if (rateLst.Count < requiredPeriod)
+                {
+                    _logger.LogWarning($"⚠ Solo hay {rateLst.Count} registros, se necesitan al menos {requiredPeriod} para WAM completo");
+                }
+
+                var wmaValues = CalculateWeightedMovingAverage(rateLst, wamPeriod);
+                _logger.LogInformation($"✓ WAM calculado: {wmaValues.Count} valores (período {wamPeriod})");
+
+                // ✅ Asignar WAM y calcular porcentaje de diferencia
+                for (int i = 0; i < rateLst.Count && i < wmaValues.Count; i++)
+                {
+                    rateLst[i].CalculatedWAM = wmaValues[i] ?? 0;
+
+                    // ✅ Calcular porcentaje según fórmula de Excel: ABS(Close - WAM) / Close * 100
+                    double closePrice = rateLst[i].CLOSE;
+                    double wamValue = rateLst[i].CalculatedWAM;
+
+                    if (closePrice != 0)
+                    {
+                        double percentageDiff = (Math.Abs(closePrice - wamValue) / closePrice) * 100;
+
+                        // ✅ Redondear a 4 decimales para consistencia con Excel
+                        percentageDiff = Math.Round(percentageDiff, 4);
+
+                        // ✅ Aplicar signo: positivo si Close >= WAM, negativo si Close < WAM
+                        rateLst[i].PercentageDifference = closePrice >= wamValue
+                            ? percentageDiff
+                            : -percentageDiff;
+                    }
+                    else
+                    {
+                        rateLst[i].PercentageDifference = 0;
+                    }
+                }
+            }
+
+            return rateLst;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "ERROR en GetDatePriceHistoryAsync");
+            return rateLst;
+        }
+    }
+
+    // ✅ Mantener versión síncrona para compatibilidad
+    public List<Rates> GetDatePriceHistory(DateTime dateFilter, string symbolStr, int wamPeriod)
+    {
+        return GetDatePriceHistoryAsync(dateFilter, symbolStr, wamPeriod).GetAwaiter().GetResult();
+    }
+
+    public byte[] GetDatePriceHistoryExcel(DateTime dateFilter, string symbolStr, int wamPeriod)
+    {
+        try
+        {
+            _logger.LogInformation($"=== EXCEL EXPORT: {symbolStr} - {dateFilter:yyyy-MM-dd} - WAM {wamPeriod} ===");
+
+            // ✅ Obtener datos con WAM ya calculado
+            var rateLst = GetDatePriceHistory(dateFilter, symbolStr, wamPeriod);
+
+            if (rateLst == null || rateLst.Count == 0)
+            {
+                _logger.LogWarning("EXCEL: No hay datos");
+                return null;
+            }
+
+            using (var package = new ExcelPackage())
+            {
+                var ws = package.Workbook.Worksheets.Add("Historial");
+
+                // ✅ Encabezados - Primera fila con merge para "Compuesto"
+                ws.Cells[1, 1].Value = "#";
+                ws.Cells[1, 2].Value = "TIME";
+                ws.Cells[1, 3].Value = "OPEN";
+                ws.Cells[1, 4].Value = "HIGH";
+                ws.Cells[1, 5].Value = "LOW";
+                ws.Cells[1, 6].Value = "CLOSE";
+                ws.Cells[1, 7].Value = "TICK_VOLUME";
+                ws.Cells[1, 8].Value = "SPREAD";
+                ws.Cells[1, 9].Value = "REAL_VOLUME";
+                ws.Cells[1, 10].Value = "SYMBOL";
+                ws.Cells[1, 11].Value = "TIME_MTAPI";
+
+                // ✅ Merge cells para "Compuesto"
+                ws.Cells[1, 12, 1, 13].Merge = true;
+                ws.Cells[1, 12].Value = "Compuesto";
+
+                // ✅ Subencabezados en fila 2
+                ws.Cells[2, 12].Value = "WAM";
+                ws.Cells[2, 13].Value = "%";
+
+                // ✅ Aplicar formato a encabezados principales (fila 1)
+                using (var range = ws.Cells[1, 1, 1, 11])
+                {
+                    range.Style.Font.Bold = true;
+                    range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                    range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    range.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                }
+
+                // ✅ Aplicar formato a "Compuesto" merge
+                using (var range = ws.Cells[1, 12, 1, 13])
+                {
+                    range.Style.Font.Bold = true;
+                    range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(74, 85, 196));
+                    range.Style.Font.Color.SetColor(System.Drawing.Color.White);
+                    range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    range.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                }
+
+                // ✅ Aplicar formato a subencabezados (fila 2)
+                using (var range = ws.Cells[2, 12, 2, 13])
+                {
+                    range.Style.Font.Bold = true;
+                    range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(74, 85, 196));
+                    range.Style.Font.Color.SetColor(System.Drawing.Color.White);
+                    range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                }
+
+                // ✅ Llenar datos desde la fila 3
+                int row = 3;
+                int rowNumber = 1;
+                foreach (var rate in rateLst)
+                {
+                    ws.Cells[row, 1].Value = rowNumber;
+                    ws.Cells[row, 2].Value = rate.TIME;
+                    ws.Cells[row, 3].Value = rate.OPEN;
+                    ws.Cells[row, 4].Value = rate.HIGH;
+                    ws.Cells[row, 5].Value = rate.LOW;
+                    ws.Cells[row, 6].Value = rate.CLOSE;
+                    ws.Cells[row, 7].Value = rate.TICK_VOLUME;
+                    ws.Cells[row, 8].Value = rate.SPREAD;
+                    ws.Cells[row, 9].Value = rate.REAL_VOLUME;
+                    ws.Cells[row, 10].Value = symbolStr;
+                    ws.Cells[row, 11].Value = rate.TIME_MTAPI;
+                    ws.Cells[row, 12].Value = rate.CalculatedWAM;
+                    ws.Cells[row, 13].Value = rate.PercentageDifference;
+
+                    // ✅ Formato de 5 decimales para WAM
+                    ws.Cells[row, 12].Style.Numberformat.Format = "0.00000";
+
+                    // ✅ Formato de porcentaje: cambiar a número con símbolo %
+                    ws.Cells[row, 13].Style.Numberformat.Format = "0.0000\"%\"";
+
+                    // ✅ Color condicional para porcentaje
+                    if (rate.PercentageDifference >= 0)
+                        ws.Cells[row, 13].Style.Font.Color.SetColor(System.Drawing.Color.Green);
+                    else
+                        ws.Cells[row, 13].Style.Font.Color.SetColor(System.Drawing.Color.Red);
+
+                    row++;
+                    rowNumber++;
+                }
+
+                // ✅ Aplicar formato de número a columnas de precio
+                ws.Cells[3, 3, row - 1, 6].Style.Numberformat.Format = "0.00000";
+                ws.Cells[ws.Dimension.Address].AutoFitColumns();
+
+                _logger.LogInformation($"EXCEL: Generado exitosamente con {rateLst.Count} registros");
+
+                return package.GetAsByteArray();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating Excel");
+            return null;
+        }
+    }
+
+    public void DisconnectFromMetaTrader()
+    {
+        // Logic to disconnect from MetaTrader
+    }
+
+    // Helper method to convert TimeFrame to TimeSpan
+    private TimeSpan TimeSpanFromTF(TimeFrame tf)
+    {
+        return tf switch
+        {
+            TimeFrame.PERIOD_M1 => TimeSpan.FromMinutes(1),
+            TimeFrame.PERIOD_M2 => TimeSpan.FromMinutes(2),
+            TimeFrame.PERIOD_M3 => TimeSpan.FromMinutes(3),
+            TimeFrame.PERIOD_M4 => TimeSpan.FromMinutes(4),
+            TimeFrame.PERIOD_M5 => TimeSpan.FromMinutes(5),
+            TimeFrame.PERIOD_M6 => TimeSpan.FromMinutes(6),
+            TimeFrame.PERIOD_M10 => TimeSpan.FromMinutes(10),
+            TimeFrame.PERIOD_M15 => TimeSpan.FromMinutes(15),
+            TimeFrame.PERIOD_M20 => TimeSpan.FromMinutes(20),
+            TimeFrame.PERIOD_M30 => TimeSpan.FromMinutes(30),
+            TimeFrame.PERIOD_H1 => TimeSpan.FromHours(1),
+            TimeFrame.PERIOD_H2 => TimeSpan.FromHours(2),
+            TimeFrame.PERIOD_H3 => TimeSpan.FromHours(3),
+            TimeFrame.PERIOD_H4 => TimeSpan.FromHours(4),
+            TimeFrame.PERIOD_H6 => TimeSpan.FromHours(6),
+            TimeFrame.PERIOD_H8 => TimeSpan.FromHours(8),
+            TimeFrame.PERIOD_H12 => TimeSpan.FromHours(12),
+            TimeFrame.PERIOD_D1 => TimeSpan.FromDays(1),
+            TimeFrame.PERIOD_W1 => TimeSpan.FromDays(7),
+            TimeFrame.PERIOD_MN1 => TimeSpan.FromDays(30),
+            _ => TimeSpan.FromMinutes(1)
+        };
+    }
+
+    public void Mt5_OnPrice(object? sender, Quote e)
+    {
+        // _logger.LogInformation($"All incoming are -> {e}");
+        _mtHubContext.Clients.All.SendAsync("ReceiveMetaTraderData", e).Wait();
+    }
+
+    // Por qué redondear en el backend:
+    // ✅ Consistencia: Todos los clientes (Web, Excel, Mobile) reciben los mismos valores
+    // ✅ Performance: El servidor hace el cálculo una vez, no cada cliente
+    // ✅ Precisión: Evitas problemas de redondeo de JavaScript
+    // ✅ Menos tráfico: Envías menos bytes por la red
+    // ✅ Lógica de negocio: El cálculo financiero debe estar centralizado
+    /// <summary>
+    /// Calcula el Weighted Moving Average (WMA) - Promedio Móvil Ponderado
+    /// Basado en la fórmula de Excel: SUMPRODUCT(Precios, Multiplicadores) / SUM(Multiplicadores)
+    /// </summary>
+    private List<double?> CalculateWeightedMovingAverage(List<Rates> rates, int period)
+    {
+        var wmaValues = new List<double?>();
+
+        if (rates == null || rates.Count == 0)
+            return wmaValues;
+
+        // Excel usa period + 1 multiplicadores (21 para período 20, 51 para período 50)
+        int actualPeriod = period + 1;
+
+        _logger.LogInformation($"=== Iniciando cálculo WAM período={period} (actualPeriod={actualPeriod}) ===");
+
+        for (int i = 0; i < rates.Count; i++)
+        {
+            // Determinar cuántos valores usar
+            int valuesAvailable = i + 1;
+            int valuesForWam = Math.Min(valuesAvailable, actualPeriod);
+
+            double sumProduct = 0;
+            int sumOfMultipliers = 0;
+
+            // ✅ CORRECCIÓN CRÍTICA: Usar ventana móvil para TODOS los loops
+            for (int j = 0; j < valuesForWam; j++)
+            {
+                int multiplier = j + 1;
+
+                // ✅ CLAVE: Calcular índice correcto para ventana móvil
+                // Loop 1 (i=0): priceIndex = 0 - 0 + 0 = 0 (usa rates[0])
+                // Loop 2 (i=1): j=0 -> priceIndex = 1 - 1 + 0 = 0, j=1 -> priceIndex = 1 - 1 + 1 = 1 (usa rates[0,1])
+                // Loop 21 (i=20): usa rates[0..20]
+                // Loop 22 (i=21): usa rates[1..21] (ventana móvil)
+                int priceIndex = i - (valuesForWam - 1) + j;
+
+                double closePrice = rates[priceIndex].CLOSE;
+
+                sumProduct += multiplier * closePrice;
+                sumOfMultipliers += multiplier;
+
+                // Debug para las primeras 3 filas y filas 20-22
+                if (i < 3 || (i >= 19 && i <= 22))
+                {
+                    _logger.LogInformation(
+                        $"  i={i + 1}, j={j}: mult={multiplier}, priceIdx={priceIndex}, " +
+                        $"close={closePrice:F5}, sumProd={sumProduct:F5}");
+                }
+            }
+
+            double wma = sumProduct / sumOfMultipliers;
+            double roundedWma = Math.Round(wma, 5);
+            wmaValues.Add(roundedWma);
+
+            // Log resumen
+            if (i < 3 || (i >= 19 && i <= 22))
+            {
+                _logger.LogInformation(
+                    $"WAM Row {i + 1}: valuesUsed={valuesForWam}, sumProd={sumProduct:F10}, " +
+                    $"sumMult={sumOfMultipliers}, WAM={roundedWma:F5}, Close={rates[i].CLOSE:F5}");
+            }
+        }
+
+        _logger.LogInformation($"=== WAM calculado: {wmaValues.Count} valores ===");
+
+        return wmaValues;
+    }
+}

@@ -1,0 +1,601 @@
+@* filepath: C:\vsprojs\Sati-Net-Last\Views\HistoryMT\Index.cshtml *@
+@{
+    ViewData["Title"] = "History MT";
+    var symbols = ViewBag.Symbols as List<string> ?? new List<string>();
+}
+
+<div class="historymt-container" style="padding: 20px;">
+    <h2 style="color: #2c3e50; margin-bottom: 30px; font-weight: 600;">
+        History MT - Historial de Precios por Símbolo
+    </h2>
+
+    @if (symbols.Count > 0)
+    {
+        <div class="filters-container"
+            style="background: #f8f9fa; padding: 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 25px;">
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; align-items: end;">
+                <!-- Selector de Símbolo -->
+                <div class="form-group">
+                    <label for="symbolDropdown"
+                        style="display:block; margin-bottom:8px; font-weight:600; color:#495057; font-size:14px;">
+                        Símbolo
+                    </label>
+                    <select id="symbolDropdown" class="form-select"
+                        style="padding:10px; border: 2px solid #dee2e6; border-radius: 6px; font-size: 14px;">
+                        <option value="">-- Seleccionar --</option>
+                        @foreach (var symbol in symbols)
+                        {
+                            <option value="@symbol">@symbol</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Selector de Fecha -->
+                <div class="form-group">
+                    <label for="dateFilter"
+                        style="display:block; margin-bottom:8px; font-weight:600; color:#495057; font-size:14px;">
+                        Fecha
+                    </label>
+                    <input type="date" id="dateFilter" class="form-control"
+                        style="padding:10px; border: 2px solid #dee2e6; border-radius: 6px; font-size: 14px;" />
+                </div>
+
+                <!-- Selector de Cálculo WAM -->
+                <div class="form-group">
+                    <label for="wamPeriodDropdown"
+                        style="display:block; margin-bottom:8px; font-weight:600; color:#495057; font-size:14px;">
+                        Cálculo WAM
+                    </label>
+                    <select id="wamPeriodDropdown" class="form-select"
+                        style="padding:10px; border: 2px solid #dee2e6; border-radius: 6px; font-size: 14px;">
+                        <option value="20" selected>20</option>
+                        <option value="50">50</option>
+                    </select>
+                </div>
+
+                <!-- Botón Cargar Historial -->
+                <div class="form-group">
+                    <label style="display:block; margin-bottom:8px; opacity:0;">-</label>
+                    <button id="btnLoadHistory" class="btn btn-primary" onclick="loadPriceHistory()"
+                        style="width: 100%; padding:10px 15px; border-radius: 6px; font-weight: 500; font-size: 14px; border: none; background: #5a67d8; color: white; transition: background 0.2s;">
+                        Cargar Historial
+                    </button>
+                </div>
+
+                <!-- Botón Descargar Excel -->
+                <div class="form-group">
+                    <label style="display:block; margin-bottom:8px; opacity:0;">-</label>
+                    <button id="btnDownloadExcel" class="btn btn-success" onclick="downloadExcel()" disabled
+                        style="width: 100%; padding:10px 15px; border-radius: 6px; font-weight: 500; font-size: 14px; border: none; background: #48bb78; color: white; transition: background 0.2s;">
+                        Descargar Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenedor del gráfico con spinner -->
+        <div style="position: relative;">
+            <!-- Spinner de carga -->
+            <div id="loadingSpinner"
+                style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10;">
+                <div class="spinner-border" role="status" style="width: 4rem; height: 4rem; color: #5a67d8;">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p style="color: #5a67d8; font-weight: 600; margin-top: 15px; text-align: center;">Cargando datos...</p>
+            </div>
+
+            <!-- Gráfico -->
+            <div id="historyChartContainer"
+                style="width:100%; max-width:1200px; height:550px; background:#181a20; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+            </div>
+        </div>
+
+        <!-- Tabla de datos -->
+        <div id="dataTableContainer"
+            style="display: none; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <h4 style="color: #2c3e50; margin-bottom: 20px; font-weight: 600;">
+                Datos Detallados - <span id="wamPeriodLabel">WAM 20</span>
+            </h4>
+
+            <table id="priceDataTable" class="table table-striped table-hover" style="width: 100%;">
+                <thead style="background: #5a67d8; color: white;">
+                    <!-- ✅ Primera fila: Encabezados agrupados -->
+                    <tr>
+                        <th rowspan="2"
+                            style="padding: 12px; text-align: center; width: 60px; vertical-align: middle; border-right: 2px solid white;">
+                            #</th>
+                        <th rowspan="2"
+                            style="padding: 12px; text-align: left; vertical-align: middle; border-right: 2px solid white;">
+                            Time</th>
+                        <th rowspan="2"
+                            style="padding: 12px; text-align: right; vertical-align: middle; border-right: 2px solid white;">
+                            Open</th>
+                        <th rowspan="2"
+                            style="padding: 12px; text-align: right; vertical-align: middle; border-right: 2px solid white;">
+                            Close</th>
+                        <th colspan="2" style="padding: 12px; text-align: center; background: #4a55c4;">Compuesto</th>
+                    </tr>
+                    <!-- ✅ Segunda fila: Subcolumnas -->
+                    <tr>
+                        <th style="padding: 8px; text-align: right; background: #4a55c4; border-right: 1px solid white;">WAM
+                        </th>
+                        <th style="padding: 8px; text-align: right; background: #4a55c4;">%</th>
+                    </tr>
+                </thead>
+                <tbody id="priceDataTableBody">
+                    <!-- Los datos se llenarán dinámicamente -->
+                </tbody>
+            </table>
+
+            <!-- Paginación o información adicional -->
+            <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="color: #6c757d; font-size: 14px;">
+                    <span id="tableInfo">
+                        Mostrando <strong id="rowCount">0</strong> registros (página <strong
+                            id="currentPageDisplay">1</strong> de <strong id="totalPagesDisplay">1</strong>) - Total:
+                        <strong id="totalRowCount">0</strong> registros
+                    </span>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button id="btnFirstPage" onclick="goToPage(1)" class="btn btn-sm btn-outline-primary"
+                        style="padding: 5px 12px; border-radius: 4px;">
+                        Primera
+                    </button>
+                    <button id="btnPrevPage" onclick="previousPage()" class="btn btn-sm btn-outline-primary"
+                        style="padding: 5px 12px; border-radius: 4px;">
+                        Anterior
+                    </button>
+                    <button id="btnNextPage" onclick="nextPage()" class="btn btn-sm btn-outline-primary"
+                        style="padding: 5px 12px; border-radius: 4px;">
+                        Siguiente
+                    </button>
+                    <button id="btnLastPage" onclick="goToLastPage()" class="btn btn-sm btn-outline-primary"
+                        style="padding: 5px 12px; border-radius: 4px;">
+                        Última
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-danger" style="padding: 20px; border-radius: 8px; border-left: 4px solid #dc3545;">
+            <strong>Error:</strong>
+            No se pudieron cargar los símbolos. Verifica que la API esté activa.
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        let currentPageData = {
+            allData: [],
+            currentPage: 1,
+            pageSize: 20
+        };
+
+        // Establecer la fecha de hoy por defecto cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', function () {
+            // Resetear filtros
+            resetFilters();
+
+            const dateInput = document.getElementById('dateFilter');
+            if (dateInput) {
+                dateInput.valueAsDate = new Date();
+            }
+
+            // Añadir efectos hover a los botones
+            const btnLoad = document.getElementById('btnLoadHistory');
+            const btnExcel = document.getElementById('btnDownloadExcel');
+
+            if (btnLoad) {
+                btnLoad.addEventListener('mouseenter', function () {
+                    this.style.background = '#4c51bf';
+                });
+                btnLoad.addEventListener('mouseleave', function () {
+                    this.style.background = '#5a67d8';
+                });
+            }
+
+            if (btnExcel) {
+                btnExcel.addEventListener('mouseenter', function () {
+                    if (!this.disabled) {
+                        this.style.background = '#38a169';
+                    }
+                });
+                btnExcel.addEventListener('mouseleave', function () {
+                    if (!this.disabled) {
+                        this.style.background = '#48bb78';
+                    }
+                });
+            }
+        });
+
+        function resetFilters() {
+            // Resetear símbolo
+            const symbolDropdown = document.getElementById('symbolDropdown');
+            if (symbolDropdown) {
+                symbolDropdown.value = '';
+            }
+
+            // Resetear fecha a hoy
+            const dateInput = document.getElementById('dateFilter');
+            if (dateInput) {
+                dateInput.valueAsDate = new Date();
+            }
+
+            // WAM period por defecto es 20 (ya está en el HTML con selected)
+            const wamPeriodDropdown = document.getElementById('wamPeriodDropdown');
+            if (wamPeriodDropdown) {
+                wamPeriodDropdown.value = '20';
+            }
+
+            // Deshabilitar botón de Excel
+            const btnExcel = document.getElementById('btnDownloadExcel');
+            if (btnExcel) {
+                btnExcel.disabled = true;
+                btnExcel.style.opacity = '0.5';
+            }
+
+            // Ocultar tabla de datos
+            const dataTableContainer = document.getElementById('dataTableContainer');
+            if (dataTableContainer) {
+                dataTableContainer.style.display = 'none';
+            }
+
+            console.log('Filtros reseteados a valores por defecto');
+        }
+
+        function showLoading() {
+            const spinner = document.getElementById('loadingSpinner');
+            const chartContainer = document.getElementById('historyChartContainer');
+            if (spinner) spinner.style.display = 'block';
+            if (chartContainer) chartContainer.style.opacity = '0.3';
+        }
+
+        function hideLoading() {
+            const spinner = document.getElementById('loadingSpinner');
+            const chartContainer = document.getElementById('historyChartContainer');
+            if (spinner) spinner.style.display = 'none';
+            if (chartContainer) chartContainer.style.opacity = '1';
+        }
+
+        async function loadPriceHistory() {
+            const symbol = document.getElementById('symbolDropdown').value;
+            const dateFilter = document.getElementById('dateFilter').value;
+            const wamPeriod = document.getElementById('wamPeriodDropdown').value;
+
+            console.log('=== Iniciando carga de historial ===');
+            console.log('Símbolo seleccionado:', symbol);
+            console.log('Fecha seleccionada:', dateFilter);
+            console.log('Período WAM seleccionado:', wamPeriod);
+
+            if (!symbol) {
+                alert('Por favor selecciona un símbolo');
+                return;
+            }
+
+            if (!dateFilter) {
+                alert('Por favor selecciona una fecha');
+                return;
+            }
+
+            // Verificar que LightweightCharts esté disponible
+            if (typeof LightweightCharts === 'undefined') {
+                console.error('LightweightCharts no está cargado');
+                alert('Error: La librería de gráficos no está cargada. Por favor recarga la página.');
+                return;
+            }
+
+            // Verificar que drawHistoryChart esté disponible
+            if (typeof drawHistoryChart !== 'function') {
+                console.error('drawHistoryChart no está definido');
+                alert('Error: La función de gráficos no está disponible. Por favor recarga la página.');
+                return;
+            }
+
+            // Mostrar spinner
+            showLoading();
+
+            // Deshabilitar botón mientras carga
+            const btnLoad = document.getElementById('btnLoadHistory');
+            btnLoad.disabled = true;
+
+            try {
+                const url = '@Url.Action("GetDatePriceHistory", "HistoryMT")' + `?dateFilter=${dateFilter}&symbolStr=${encodeURIComponent(symbol)}&wamPeriod=${wamPeriod}`;
+
+                console.log('URL de solicitud:', url);
+
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                console.log('Respuesta recibida:', response.status, response.statusText);
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    console.log('Datos recibidos del servidor:', data);
+                    console.log('Tipo de datos:', typeof data);
+                    console.log('Es array:', Array.isArray(data));
+
+                    if (data && data.length > 0) {
+                        console.log(`✓ Total de registros: ${data.length}`);
+                        console.log('Primer registro:', data[0]);
+
+                        const candles = data.map(d => ({
+                            time: getUnixTimeStamp(d.timE_MTAPI || d.time),
+                            open: parseFloat(d.open),
+                            high: parseFloat(d.high),
+                            low: parseFloat(d.low),
+                            close: parseFloat(d.close),
+                            volume: parseFloat(d.ticK_VOLUME || d.reaL_VOLUME || 0)
+                        }));
+
+                        console.log('Candles procesadas:', candles.length);
+                        console.log('Primera candle:', candles[0]);
+
+                        drawHistoryChart('historyChartContainer', candles);
+
+                        // Llenar tabla con datos
+                        populateDataTable(data);
+
+                        // Habilitar botón de descarga
+                        const btnExcel = document.getElementById('btnDownloadExcel');
+                        btnExcel.disabled = false;
+                        btnExcel.style.opacity = '1';
+                        btnExcel.style.cursor = 'pointer';
+                    } else {
+                        console.warn('⚠ No hay datos en la respuesta');
+                        console.warn('Datos recibidos:', data);
+                        alert(`No hay datos disponibles para ${symbol} en la fecha ${dateFilter}.\n\nPosibles causas:\n- El mercado estaba cerrado ese día\n- No hay datos históricos para esa fecha\n- Verifica que MetaTrader esté conectado`);
+                    }
+                } else {
+                    console.error('❌ Error en la respuesta del servidor:', response.status);
+                    const errorText = await response.text();
+                    console.error('Detalles del error:', errorText);
+                    alert(`Error al cargar el historial (${response.status}):\n${errorText}`);
+                }
+            } catch (error) {
+                console.error('❌ Error en la solicitud:', error);
+                alert('Error al cargar el historial de precios: ' + error.message);
+            } finally {
+                // Ocultar spinner y rehabilitar botón
+                hideLoading();
+                btnLoad.disabled = false;
+                console.log('=== Finalizada carga de historial ===');
+            }
+        }
+
+        function populateDataTable(data) {
+            // Guardar los datos globalmente
+            const wamPeriod = document.getElementById('wamPeriodDropdown').value;
+            currentPageData.allData = data;
+            currentPageData.pageSize = parseInt(wamPeriod);
+            currentPageData.currentPage = 1;
+
+            // Renderizar la página actual
+            renderTablePage();
+        }
+
+        function renderTablePage() {
+            const tableBody = document.getElementById('priceDataTableBody');
+            const tableContainer = document.getElementById('dataTableContainer');
+            const rowCount = document.getElementById('rowCount');
+            const totalRowCount = document.getElementById('totalRowCount');
+            const wamPeriodLabel = document.getElementById('wamPeriodLabel');
+            const currentPageDisplay = document.getElementById('currentPageDisplay');
+            const totalPagesDisplay = document.getElementById('totalPagesDisplay');
+
+            // Limpiar tabla
+            tableBody.innerHTML = '';
+
+            const data = currentPageData.allData;
+
+            if (!data || data.length === 0) {
+                tableContainer.style.display = 'none';
+                return;
+            }
+
+            const pageSize = currentPageData.pageSize;
+            const currentPage = currentPageData.currentPage;
+
+            // Actualizar label del periodo WAM
+            wamPeriodLabel.textContent = `WAM ${pageSize}`;
+
+            // Calcular total de páginas
+            const totalPages = Math.ceil(data.length / pageSize);
+
+            // Calcular índices para la paginación
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = Math.min(startIndex + pageSize, data.length);
+
+            // Obtener solo los registros de la página actual
+            const pageData = data.slice(startIndex, endIndex);
+
+            // Llenar la tabla con los datos de la página actual
+            pageData.forEach((item, index) => {
+                const row = document.createElement('tr');
+
+                // Aplicar estilo alternado
+                if (index % 2 === 0) {
+                    row.style.backgroundColor = '#f8f9fa';
+                }
+
+                // Calcular el número de fila global
+                const globalRowNumber = startIndex + index + 1;
+
+                // ✅ Obtener valores del backend
+                const closePrice = parseFloat(item.close);
+                const wamValue = parseFloat(item.calculatedWAM);
+                const percentage = parseFloat(item.percentageDifference); // ✅ Ya calculado en el backend
+
+                // ✅ Color y signo basado en el valor del porcentaje
+                const percentageColor = percentage >= 0 ? '#28a745' : '#dc3545';
+                const percentageSign = percentage >= 0 ? '+' : ''; // El signo negativo ya viene en el valor
+
+                row.innerHTML = `
+                    <td style="padding: 10px; text-align: center; font-weight: 600; color: #6c757d;">${globalRowNumber}</td>
+                    <td style="padding: 10px;">${item.time || item.timE_MTAPI || 'N/A'}</td>
+                    <td style="padding: 10px; text-align: right; font-family: monospace;">${parseFloat(item.open).toFixed(5)}</td>
+                    <td style="padding: 10px; text-align: right; font-family: monospace;">${closePrice.toFixed(5)}</td>
+                    <td style="padding: 10px; text-align: right; font-family: monospace; color: #5a67d8; font-weight: 600;">${wamValue.toFixed(5)}</td>
+                    <td style="padding: 10px; text-align: right; font-family: monospace; color: ${percentageColor}; font-weight: 600;">${percentageSign}${Math.abs(percentage).toFixed(4)}%</td>
+                `;
+
+                tableBody.appendChild(row);
+            });
+
+            // Actualizar contadores
+            rowCount.textContent = pageData.length;
+            totalRowCount.textContent = data.length;
+            currentPageDisplay.textContent = currentPage;
+            totalPagesDisplay.textContent = totalPages;
+
+            // Habilitar/deshabilitar botones de paginación
+            const btnFirstPage = document.getElementById('btnFirstPage');
+            const btnPrevPage = document.getElementById('btnPrevPage');
+            const btnNextPage = document.getElementById('btnNextPage');
+            const btnLastPage = document.getElementById('btnLastPage');
+
+            btnFirstPage.disabled = currentPage === 1;
+            btnPrevPage.disabled = currentPage === 1;
+            btnNextPage.disabled = currentPage >= totalPages;
+            btnLastPage.disabled = currentPage >= totalPages;
+
+            tableContainer.style.display = 'block';
+
+            console.log(`Tabla poblada: Página ${currentPage} de ${totalPages} - Mostrando ${pageData.length} registros de ${data.length} totales`);
+        }
+
+        function goToPage(pageNumber) {
+            const totalPages = Math.ceil(currentPageData.allData.length / currentPageData.pageSize);
+
+            if (pageNumber >= 1 && pageNumber <= totalPages) {
+                currentPageData.currentPage = pageNumber;
+                renderTablePage();
+            }
+        }
+
+        function nextPage() {
+            goToPage(currentPageData.currentPage + 1);
+        }
+
+        function previousPage() {
+            goToPage(currentPageData.currentPage - 1);
+        }
+
+        function goToLastPage() {
+            const totalPages = Math.ceil(currentPageData.allData.length / currentPageData.pageSize);
+            goToPage(totalPages);
+        }
+
+        async function downloadExcel() {
+            const symbol = document.getElementById('symbolDropdown').value;
+            const dateFilter = document.getElementById('dateFilter').value;
+            const wamPeriod = document.getElementById('wamPeriodDropdown').value;
+
+            if (!symbol || !dateFilter) {
+                alert('Por favor selecciona un símbolo y una fecha');
+                return;
+            }
+
+            try {
+                const url = '@Url.Action("GetDatePriceHistoryExcel", "HistoryMT")' + `?dateFilter=${dateFilter}&symbolStr=${encodeURIComponent(symbol)}&wamPeriod=${wamPeriod}`;
+
+                console.log('Descargando Excel desde:', url);
+                window.location.href = url;
+            } catch (error) {
+                console.error('Error downloading Excel:', error);
+                alert('Error al descargar el archivo Excel.');
+            }
+        }
+
+        function getUnixTimeStamp(timeStr) {
+            if (!timeStr) {
+                console.warn('getUnixTimeStamp: timeStr es null o undefined');
+                return 0;
+            }
+
+            if (typeof timeStr === "string" && timeStr.includes(".")) {
+                const iso = timeStr.replace(/\./g, "-").replace(" ", "T");
+                const timestamp = Math.floor(new Date(iso).getTime() / 1000);
+                console.log(`Convertido: ${timeStr} → ${timestamp}`);
+                return timestamp;
+            }
+
+            const timestamp = Math.floor(new Date(timeStr).getTime() / 1000);
+            console.log(`Convertido directo: ${timeStr} → ${timestamp}`);
+            return timestamp;
+        }
+    </script>
+
+    <style>
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed !important;
+            background: #a0aec0 !important;
+        }
+
+        .form-select:focus,
+        .form-control:focus {
+            border-color: #5a67d8;
+            box-shadow: 0 0 0 0.2rem rgba(90, 103, 216, 0.15);
+            outline: none;
+        }
+
+        .spinner-border {
+            border: 0.35em solid rgba(90, 103, 216, 0.2);
+            border-right-color: #5a67d8;
+            border-radius: 50%;
+            animation: spinner-border 0.75s linear infinite;
+        }
+
+        @@keyframes spinner-border {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .btn-outline-primary {
+            color: #5a67d8;
+            border: 1px solid #5a67d8;
+            background: white;
+            transition: all 0.2s;
+        }
+
+        .btn-outline-primary:hover:not(:disabled) {
+            background: #5a67d8;
+            color: white;
+            cursor: pointer;
+        }
+
+        .btn-outline-primary:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            color: #a0aec0;
+            border-color: #a0aec0;
+        }
+
+        .btn-sm {
+            font-size: 13px;
+            font-weight: 500;
+        }
+    </style>
+}

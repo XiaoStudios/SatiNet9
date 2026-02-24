@@ -1,0 +1,40 @@
+﻿@* filepath: C:\vsprojs\Sati-Net-Last\Views\Shared\_Layout.cshtml *@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Sati Net Last</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="container">
+                <a class="navbar-brand" href="@Url.Action("Index", "Home")">Sati Net Last</a>
+                <ul class="nav-menu">
+                    <li><a href="@Url.Action("Index", "Home")" class="nav-link">Home</a></li>
+                    <li><a href="@Url.Action("Index", "SatiTrader")" class="nav-link">Sati Trader</a></li>
+                    <li><a href="@Url.Action("Index", "Excel")" class="nav-link">Excel Page</a></li>
+                    <li><a href="@Url.Action("Index", "HistoryMT")" class="nav-link">History MT</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+    
+    <main role="main" class="container">
+        @RenderBody()
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <span>&copy; 2026 - Sati Net Last - Trading Platform</span>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script src="~/js/charts.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
