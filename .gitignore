@@ -400,3 +400,19 @@ FodyWeavers.xsd
 # Archivos específicos del proyecto
 *.http
 launchSettings.json
+
+
+
+# Archivos importantes que SÍ se subirán:
+
+# ✅ Código fuente (.cs, .cshtml, .csproj)
+# ✅ Solution file (.sln)
+# ✅ appsettings.json (base, sin datos sensibles)
+# Archivos que NO se subirán:
+
+# ❌ bin/, obj/ (archivos compilados)
+# ❌ .vs/ (cache de Visual Studio)
+# ❌ appsettings.Development.json (configuración local)
+# ❌ Archivos de usuario (.user, .suo)
+# ❌ Paquetes NuGet
+# Similar code found with 4 licen
