@@ -44,6 +44,20 @@ namespace MTsocketAPI.MT5
 
 		public double CalculatedWAM { get; set; }
 		public double PercentageDifference { get; set; }
+		
+		// Algoritmo Operativo (nuevo)
+		public double PMPn { get; set; }
+		public double MaxP { get; set; }
+		public double MinP { get; set; }
+		public double? PreviousPMPn { get; set; }
+		public double RPPlus { get; set; }
+		public double RPMinus { get; set; }
+		public string Tendencia { get; set; }
+		public double Difn { get; set; }
+		public double? PromDifn { get; set; }
+		public double? SigmaDifn { get; set; }
+		public string Signal { get; set; }
+		public double? ImporteAcumulacion { get; set; }
     }
 
 	public class MarketBook

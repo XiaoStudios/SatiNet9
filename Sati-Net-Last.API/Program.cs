@@ -7,6 +7,7 @@ using Sati_Net_Last.API.MTRepositories;
 using Sati_Net_Last.API.MTRepositories.Interfaces;
 using Sati_Net_Last.API.Repositories.Implementations;
 using Sati_Net_Last.API.Repositories.Interfaces;
+using Sati_Net_Last.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +31,8 @@ builder.Services.AddSingleton<Terminal>();
 builder.Services.AddSingleton<TerminalRepo>();
 builder.Services.AddScoped<IExcelRepository, ExcelRepository>();
 builder.Services.AddScoped<IMTRepo, MTRepo>();
+
+builder.Services.AddSingleton<OperativeAlgorithmSvc>();
 
 // Add SignalR services
 builder.Services.AddSignalR();

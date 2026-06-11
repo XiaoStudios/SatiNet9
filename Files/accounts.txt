@@ -1,0 +1,61 @@
+Name     : ivan vazquez
+Type     : Forex Hedged USD
+Server   : MetaQuotes-Demo
+Login    : 96426302
+Password : VdAg*wW4
+Investor : 4pGyI-Oy
+
+
+*--*
+11-Nov-2025
+*--*
+Name     : ivan vazquez
+Type     : Forex Hedged USD
+Server   : MetaQuotes-Demo
+Login    : 5042358124
+Password : ZbOoF_0r
+Investor : PxTqSq_2
+
+
+*--*
+23-Ene-2026
+*--*
+Name     : ivan vazquez
+Type     : Forex Hedged USD
+Server   : MetaQuotes-Demo
+Login    : 10009247621
+Password : Eu@qBmF5
+Investor : Bh@x3aOp
+
+
+*--*
+02-Feb-2026
+*--*
+Name     : ivan vazquez
+Type     : Forex Hedged USD
+Server   : MetaQuotes-Demo
+Login    : 5046896463
+Password : _y0aQfIg
+Investor : -1JgHgUf
+
+
+*--*
+05-May-2026
+*--*
+Name     : ivan vazquez
+Type     : Forex Hedged USD
+Server   : MetaQuotes-Demo
+Login    : 106695867
+Password : Dx@mFeH8
+Investor : 8hWtE_Ht
+
+
+*--*
+26-May-2026
+*--*
+Name     : ivan vazquez
+Type     : Forex Hedged USD
+Server   : MetaQuotes-Demo
+Login    : 107544671
+Password : WzIuP-1i
+Investor : !a7jLoSi
