@@ -54,7 +54,7 @@ var CommonSatiUI = {
             dom: 'frtip', // Sin botones, solo filtro + tabla + paginación
             info: true,
             autoWidth: false,
-            scrollX: true,
+            // scrollX se define en customOptions según sea necesario
             language: CommonSatiUI.GetSpanishLanguage(),
             // ✅ NO renderizar headers, usar los del HTML
             headerCallback: null,

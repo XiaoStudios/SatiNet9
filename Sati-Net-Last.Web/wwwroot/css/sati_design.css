@@ -46,6 +46,77 @@
 } */
 /*48bb78*/
 
+.sati-page {
+    max-width: 1600px;
+    margin: 0 auto;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.sati-container {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 25px;
+}
+
+.sati-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #495057;
+    font-size: 14px;
+}
+
+.sati-input-control {
+    padding: 10px !important;
+    border: 2px solid #dee2e6 !important;
+    border-radius: 6px !important;
+    font-size: 14px !important;
+}
+
+.sati-warning-container {
+    background: #fff3cd;
+    border-left: 4px solid #ffc107;
+    padding: 20px;
+    border-radius: 6px;
+    margin-bottom: 25px;
+}
+
+.sati-info-container {
+    background: #e7f3ff;
+    border-left: 4px solid #2196F3;
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.sati-warning-label {
+    display:block;
+    margin-bottom:5px;
+    font-weight:600;
+    color:#856404;
+    font-size:13px;
+}
+
+.sati-warning-input {
+    padding: 8px !important;
+    border: 2px solid #dee2e6 !important;
+    border-radius: 4px !important;
+    font-size: 13px !important;
+}
+
+.sati-info-box {
+    background: #d1ecf1;
+    border-left: 4px solid #17a2b8;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+
 /* ========================================
    LOADING OVERLAY
    ======================================== */

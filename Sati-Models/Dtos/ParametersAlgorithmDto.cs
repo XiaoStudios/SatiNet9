@@ -9,11 +9,11 @@ public class ParametersAlgorithmDto
     public int Period { get; set; } = 50;
     
     // Parámetros del algoritmo
-    public double Pt { get; set; } = 0.30;  // Parámetro de tendencia
+    public double Pt { get; set; } = 0.05;  // Parámetro de tendencia (porcentaje: 0.05 = 0.05%)
     public double Pr { get; set; } = 0.75;  // Parámetro de rompimiento
     public double Sigma { get; set; } = 2.0; // Multiplicador de desviación estándar
     public double Mp { get; set; } = 1000;   // Importe inicial
-    public double Fd { get; set; } = 0.95;   // Factor decreciente
+    public double Fd { get; set; } = 0.10;   // Factor decreciente (10% pérdida por operación)
     
     // Validaciones
     public bool IsValid()

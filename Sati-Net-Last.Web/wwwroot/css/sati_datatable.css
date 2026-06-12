@@ -1,0 +1,111 @@
+/* ========================================
+   DATA TABLE STYLES (Historia MT)
+   ======================================== */
+
+#dataTableContainer {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Scroll solo para el wrapper de la tabla */
+.table-scroll-container {
+    overflow-x: auto;
+    overflow-y: visible;
+    margin-bottom: 15px;
+}
+
+/* La tabla ocupa el ancho necesario */
+#priceDataTable {
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    font-size: 14px;
+}
+
+#priceDataTable thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+#priceDataTable th {
+    background: #5a67d8 !important;
+    color: white !important;
+    padding: 12px 8px !important;
+    text-align: center !important;
+    border: 1px solid white !important;
+    white-space: nowrap;
+    font-weight: 600 !important;
+    vertical-align: middle !important;
+}
+
+#priceDataTable th.group-header {
+    background: #4a55c4 !important;
+    font-size: 0.9rem;
+}
+
+#priceDataTable td {
+    padding: 10px 8px !important;
+    vertical-align: middle !important;
+    border-bottom: 1px solid #dee2e6 !important;
+    border-left: 1px solid #e9ecef !important;
+    border-right: none !important;
+    border-top: none !important;
+    text-align: center !important;
+}
+
+#priceDataTable tbody tr {
+    background: white;
+    transition: background 0.2s ease;
+}
+
+#priceDataTable tbody tr:hover {
+    background: #f8f9fa !important;
+}
+
+#priceDataTable tbody tr:nth-child(even) {
+    background: #fafbfc;
+}
+
+#priceDataTable tbody tr:nth-child(even):hover {
+    background: #f8f9fa !important;
+}
+
+/* Números con fuente monoespaciada y centrados */
+#priceDataTable .numeric,
+#priceDataTable td:nth-child(n+3) {
+    text-align: center !important;
+    font-family: 'Courier New', Courier, monospace !important;
+    font-size: 13px;
+}
+
+/* Primera columna (#) centrada */
+#priceDataTable td:first-child {
+    text-align: center !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    font-weight: 600;
+}
+
+/* Segunda columna (Time) alineada a la izquierda */
+#priceDataTable td:nth-child(2) {
+    text-align: left !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+}
+
+/* DataTables overrides */
+.dataTables_wrapper {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    padding: 0.5em 1em !important;
+    margin-left: 2px !important;
+    border-radius: 4px !important;
+}
+
+.dataTables_wrapper .dataTables_info {
+    padding-top: 1em !important;
+    color: #6c757d !important;
+}

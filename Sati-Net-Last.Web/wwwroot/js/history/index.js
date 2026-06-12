@@ -22,28 +22,34 @@ var HistoryJS =
 
         // WAM period por defecto es 20 (ya está en el HTML con selected)
         $('#wamPeriodDropdown').val('20')
-        $('#pmpnPeriod').val($('#wamPeriodDropdown').val());
+        $('#pmpnPeriod').text($('#wamPeriodDropdown').val());
 
         // Deshabilitar botón de Excel
         $('#btnDownloadExcel').prop('disabled', true);
         
-        // Desactivar algoritmo y disparar evento para deshabilitar campos
+        // Desactivar algoritmo y deshabilitar campos relacionados
         $('#enableAlgorithm').prop('checked', false);
         $('#algorithmFields').css('opacity', '0.5');
         $('#algorithmFields input:not([readonly])').prop('disabled', true);
+        $('#visualizationOptions').css('opacity', '0.5');
+        $('#visualizationOptions input[type="checkbox"]').prop('disabled', true);
 
         // Ocultar tabla de datos
         $('#dataTableContainer').hide();
     },
     SetupEventHandlers: () => {
         // Sincronizar WAM period con PMPn period
-        $('#wamPeriodDropdown').change(function() { $('#pmpnPeriod').val($(this).val()); });
+        $('#wamPeriodDropdown').change(function() { $('#pmpnPeriod').text($(this).val()); });
 
-        // Habilitar/deshabilitar campos de algoritmo
+        // Habilitar/deshabilitar campos de algoritmo y opciones de visualización
         $('#enableAlgorithm').change(function() {
             const isChecked = this.checked;
+            // Campos del algoritmo
             $('#algorithmFields').css('opacity', isChecked ? '1' : '0.5');
             $('#algorithmFields input:not([readonly])').prop('disabled', !isChecked);
+            // Opciones de visualización (solo relevantes con algoritmo activo)
+            $('#visualizationOptions').css('opacity', isChecked ? '1' : '0.5');
+            $('#visualizationOptions input[type="checkbox"]').prop('disabled', !isChecked);
         });
 
         $('#btnLoadHistory').click(HistoryJS.LoadPriceHistory);
@@ -51,11 +57,11 @@ var HistoryJS =
         $('#btnDownloadExcel').click(HistoryJS.DownloadExcel);
     },
     ResetAlgorithmParams: () => {
-        $('#paramPt').val(0.30);
+        $('#paramPt').val(0.05);
         $('#paramPr').val(0.75);
         $('#paramSigma').val(2.0);
         $('#paramMp').val(1000);
-        $('#paramFd').val(0.95);
+        $('#paramFd').val(0.10);
     },
     LoadPriceHistory: () => {
         let symbol = $('#symbolDropdown').val();
@@ -114,6 +120,7 @@ var HistoryJS =
                     // Mostrar tabla y habilitar
                     $('#dataTableContainer').show();
                     $('#wamPeriodLabel').text(`WAM ${wamPeriod}`);
+                    $('#chartSymbolLabel').text(symbol);
                     $('#btnDownloadExcel').prop('disabled', false);
                 }
                 else {
@@ -136,9 +143,15 @@ var HistoryJS =
         const dataTableOptions = {
             order: [[1, 'asc']],
             pageLength: 20,
-            scrollX: withAlgorithm,
-            autoWidth: true,
-            orderCellsTop: true
+            scrollX: false,
+            autoWidth: false,
+            orderCellsTop: true,
+            initComplete: function(settings, json) {
+                const $table = $('#priceDataTable');
+                if (!$table.parent().hasClass('table-scroll-container')) {
+                    $table.wrap('<div class="table-scroll-container"></div>');
+                }
+            }
         };
         
         if (!withAlgorithm) {
@@ -174,36 +187,36 @@ var HistoryJS =
                 <th rowspan="2" style="padding: 10px; text-align: right;">Close</th>
 
                 <!-- Columnas WAM existentes -->
-                <th colspan="2" style="padding: 10px; text-align: center; background: #4a55c4;">Compuesto</th>
+                <th colspan="2" style="padding: 10px; text-align: center; background: #4a55c4; color: white;">Compuesto</th>
 
                 <!-- NUEVAS COLUMNAS DEL ALGORITMO -->
-                <th colspan="4" style="padding: 10px; text-align: center; background: #667eea;">Algoritmo PMPn</th>
-                <th colspan="2" style="padding: 10px; text-align: center; background: #f59e0b;">Rango Primario</th>
-                <th rowspan="2" style="padding: 10px; text-align: center; background: #10b981;">Tendencia</th>
-                <th colspan="3" style="padding: 10px; text-align: center; background: #8b5cf6;">Separación</th>
-                <th rowspan="2" style="padding: 10px; text-align: center; background: #ef4444; min-width: 100px;">
+                <th colspan="4" style="padding: 10px; text-align: center; background: #667eea; color: white;">Algoritmo PMPn</th>
+                <th colspan="2" style="padding: 10px; text-align: center; background: #f59e0b; color: white;">Rango Primario</th>
+                <th rowspan="2" style="padding: 10px; text-align: center; background: #10b981; color: white;">Tendencia</th>
+                <th colspan="3" style="padding: 10px; text-align: center; background: #8b5cf6; color: white;">Separación</th>
+                <th rowspan="2" style="padding: 10px; text-align: center; background: #ef4444; color: white; min-width: 100px;">
                     Señal</th>
-                    <th rowspan="2" style="padding: 10px; text-align: center; background: #06b6d4;">IMP<sub>i</sub></th>
+                    <th rowspan="2" style="padding: 10px; text-align: center; background: #06b6d4; color: white;">IMP<sub>i</sub></th>
                 </tr>
                 <tr>
                     <!-- Subencabezados WAM -->
-                    <th style="padding: 8px; background: #4a55c4;">WAM</th>
-                    <th style="padding: 8px; background: #4a55c4;">%</th>
+                    <th style="padding: 8px; background: #4a55c4; color: white;">WAM</th>
+                    <th style="padding: 8px; background: #4a55c4; color: white;">%</th>
 
                     <!-- Subencabezados Algoritmo -->
-                    <th style="padding: 8px; background: #667eea;">PMP<sub>n</sub></th>
-                    <th style="padding: 8px; background: #667eea;">max(P)</th>
-                    <th style="padding: 8px; background: #667eea;">min(P)</th>
-                    <th style="padding: 8px; background: #667eea;">PMP<sub>n-1</sub></th>
+                    <th style="padding: 8px; background: #667eea; color: white;">PMP<sub>n</sub></th>
+                    <th style="padding: 8px; background: #667eea; color: white;">max(P)</th>
+                    <th style="padding: 8px; background: #667eea; color: white;">min(P)</th>
+                    <th style="padding: 8px; background: #667eea; color: white;">PMP<sub>n-1</sub></th>
 
                     <!-- Subencabezados Rango -->
-                    <th style="padding: 8px; background: #f59e0b;">RP<sup>+</sup></th>
-                    <th style="padding: 8px; background: #f59e0b;">RP<sup>-</sup></th>
+                    <th style="padding: 8px; background: #f59e0b; color: white;">RP<sup>+</sup></th>
+                    <th style="padding: 8px; background: #f59e0b; color: white;">RP<sup>-</sup></th>
 
                     <!-- Subencabezados Separación -->
-                    <th style="padding: 8px; background: #8b5cf6;">Dif<sub>n</sub></th>
-                    <th style="padding: 8px; background: #8b5cf6;">Prom</th>
-                    <th style="padding: 8px; background: #8b5cf6;">σ</th>
+                    <th style="padding: 8px; background: #8b5cf6; color: white;">Dif<sub>n</sub></th>
+                    <th style="padding: 8px; background: #8b5cf6; color: white;">Prom</th>
+                    <th style="padding: 8px; background: #8b5cf6; color: white;">σ</th>
                 </tr>
             `
         :
@@ -216,12 +229,12 @@ var HistoryJS =
                     <th rowspan="2" style="padding: 10px; text-align: right; vertical-align: middle;">High</th>
                     <th rowspan="2" style="padding: 10px; text-align: right; vertical-align: middle;">Low</th>
                     <th rowspan="2" style="padding: 10px; text-align: right; vertical-align: middle;">Close</th>
-                    <th colspan="2" style="padding: 10px; text-align: center; background: #4a55c4;">Compuesto</th>
+                    <th colspan="2" style="padding: 10px; text-align: center; background: #4a55c4; color: white;">Compuesto</th>
                 </tr>
                 <!-- ✅ Segunda fila: Subcolumnas -->
                 <tr>
-                    <th style="padding: 8px; text-align: right; background: #4a55c4;">WAM</th>
-                    <th style="padding: 8px; text-align: right; background: #4a55c4;">%</th>
+                    <th style="padding: 8px; text-align: right; background: #4a55c4; color: white;">WAM</th>
+                    <th style="padding: 8px; text-align: right; background: #4a55c4; color: white;">%</th>
                 </tr>
             `;
     },
@@ -257,8 +270,8 @@ var HistoryJS =
                 { data: 'maxP', render: (d) => d ? $.fn.dataTable.render.number(',', '.', 5).display(d) : '—' },
                 { data: 'minP', render: (d) => d ? $.fn.dataTable.render.number(',', '.', 5).display(d) : '—' },
                 { data: 'previousPMPn', render: (d) => d ? $.fn.dataTable.render.number(',', '.', 5).display(d) : '—' },
-                { data: 'rpPlus', render: (d) => d ? $.fn.dataTable.render.number(',', '.', 5).display(d) : '—' },
-                { data: 'rpMinus', render: (d) => d ? $.fn.dataTable.render.number(',', '.', 5).display(d) : '—' },
+                { data: 'rpPlus', render: (d) => d ? $.fn.dataTable.render.number(',', '.', 4).display(d) + '%' : '—' },
+                { data: 'rpMinus', render: (d) => d ? $.fn.dataTable.render.number(',', '.', 4).display(d) + '%' : '—' },
                 { 
                     data: 'tendencia',
                     render: (data) => {
@@ -287,7 +300,7 @@ var HistoryJS =
                 },
                 { 
                     data: 'importeAcumulacion', 
-                    render: (d) => d ? '€' + $.fn.dataTable.render.number(',', '.', 2).display(d) : '—'
+                    render: (d) => d ? $.fn.dataTable.render.number(',', '.', 2).display(d) : '—'
                 }
             );
         }

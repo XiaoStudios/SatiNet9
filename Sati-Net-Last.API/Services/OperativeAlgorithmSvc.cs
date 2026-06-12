@@ -65,14 +65,14 @@ private readonly ILogger<OperativeAlgorithmSvc> _logger;
             if (pmpn >= maxP) maxP = pmpn;
             if (pmpn <= minP) minP = pmpn;
             
-            // 4. Calcular Rangos Primarios
-            double rpPlus = Math.Abs(pmpn - minP);
-            double rpMinus = Math.Abs(maxP - pmpn);
+            // 4. Calcular Rangos Primarios (como porcentaje del precio)
+            double rpPlus = pmpn > 0 ? (Math.Abs(pmpn - minP) / pmpn) * 100 : 0;
+            double rpMinus = pmpn > 0 ? (Math.Abs(maxP - pmpn) / pmpn) * 100 : 0;
             
             // Log detallado
             if (i < 5)
             {
-                _logger.LogInformation($"  maxP={maxP}, minP={minP}, rpPlus={rpPlus}, rpMinus={rpMinus}");
+                _logger.LogInformation($"  maxP={maxP}, minP={minP}, rpPlus={rpPlus:F4}%, rpMinus={rpMinus:F4}%");
             }
             
             // 5. Detectar tendencia y rompimientos
