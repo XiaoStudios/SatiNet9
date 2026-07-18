@@ -183,8 +183,25 @@
             </div>
         </div>
 
+        <!-- Botón de descarga Excel -->
+        <div id="excelButtonsContainer" class="sati-container" style="display: none;">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-9">
+                    <h5 style="color: #2c3e50; font-weight: 600; margin: 0;">
+                        📥 Descargar Archivo Excel
+                    </h5>
+                    <small class="text-muted">Exporta los datos cargados a formato Excel</small>
+                </div>
+                <div class="col-md-3">
+                    <button id="btnDownloadExcel" class="btn btn-success sati-download-btn" style="width: 100%;">
+                        📊 Descargar Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Tabla de datos -->
-        <div id="dataTableContainer">
+        <div id="dataTableContainer" style="display: none;">
             <h4 style="color: #2c3e50; margin-bottom: 20px; font-weight: 600;">
                 Datos Detallados - <span id="wamPeriodLabel">WAM 20</span>
             </h4>

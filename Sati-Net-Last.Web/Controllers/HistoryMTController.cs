@@ -149,4 +149,57 @@ public class HistoryMTController : Controller
             return StatusCode(500, "Error al cargar datos");
         }
     }
+
+    [HttpGet]
+    public async Task<IActionResult> GetDatePriceHistoryExcelWithAlgorithm(
+        DateTime dateFilter,
+        string symbolStr,
+        int wamPeriod,
+        double? pt = null,
+        double? pr = null,
+        double? sigma = null,
+        double? mp = null,
+        double? fd = null)
+    {
+        try
+        {
+            var client = _httpClientFactory.CreateClient("BackendAPI");
+
+            // Construir query string con parámetros opcionales
+            var queryParams = new List<string>
+            {
+                $"dateFilter={dateFilter:yyyy-MM-dd}",
+                $"symbolStr={symbolStr}",
+                $"wamPeriod={wamPeriod}"
+            };
+
+            if (pt.HasValue) queryParams.Add($"pt={pt.Value}");
+            if (pr.HasValue) queryParams.Add($"pr={pr.Value}");
+            if (sigma.HasValue) queryParams.Add($"sigma={sigma.Value}");
+            if (mp.HasValue) queryParams.Add($"mp={mp.Value}");
+            if (fd.HasValue) queryParams.Add($"fd={fd.Value}");
+
+            var queryString = string.Join("&", queryParams);
+            var response = await client.GetAsync($"api/MetaTrader/GetDatePriceHistoryExcelWithAlgorithm?{queryString}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var fileBytes = await response.Content.ReadAsByteArrayAsync();
+                var fileName = $"Historial_{symbolStr}_{dateFilter:yyyyMMdd}_Algoritmo.xlsx";
+
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogWarning($"API returned {response.StatusCode}: {errorContent}");
+                return StatusCode((int)response.StatusCode, errorContent);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener el Excel con algoritmo");
+            return StatusCode(500, "Error al generar el archivo Excel con algoritmo");
+        }
+    }
 }

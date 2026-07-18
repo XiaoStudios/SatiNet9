@@ -426,6 +426,231 @@ public class MTRepo : IMTRepo
         }
     }
 
+    public byte[] GetDatePriceHistoryExcelWithAlgorithm(List<Rates> rates, string symbolStr, DateTime dateFilter, int wamPeriod)
+    {
+        try
+        {
+            _logger.LogInformation($"=== EXCEL EXPORT WITH ALGORITHM: {symbolStr} - {dateFilter:yyyy-MM-dd} - WAM {wamPeriod} ===");
+
+            if (rates == null || rates.Count == 0)
+            {
+                _logger.LogWarning("EXCEL: No hay datos");
+                return null;
+            }
+
+            using (var package = new ExcelPackage())
+            {
+                var ws = package.Workbook.Worksheets.Add("Historial Algoritmo");
+
+                // Headers con 19 columnas organizadas en grupos
+                // Fila 1: Grupos principales
+                ws.Cells[1, 1].Value = "#";
+                ws.Cells[1, 2].Value = "TIME";
+                ws.Cells[1, 3].Value = "OPEN";
+                ws.Cells[1, 4].Value = "HIGH";
+                ws.Cells[1, 5].Value = "LOW";
+                ws.Cells[1, 6].Value = "CLOSE";
+                
+                // Grupo Compuesto (WAM + %)
+                ws.Cells[1, 7, 1, 8].Merge = true;
+                ws.Cells[1, 7].Value = "Compuesto";
+                
+                // Grupo Algoritmo PMPn
+                ws.Cells[1, 9, 1, 12].Merge = true;
+                ws.Cells[1, 9].Value = "Algoritmo PMPn";
+                
+                // Grupo Rango Primario
+                ws.Cells[1, 13, 1, 14].Merge = true;
+                ws.Cells[1, 13].Value = "Rango Primario";
+                
+                // Grupo Tendencia
+                ws.Cells[1, 15].Value = "Tendencia";
+                
+                // Grupo Separación
+                ws.Cells[1, 16, 1, 18].Merge = true;
+                ws.Cells[1, 16].Value = "Separación";
+                
+                // Grupo Señal
+                ws.Cells[1, 19].Value = "Señal";
+
+                // Fila 2: Subencabezados
+                ws.Cells[2, 7].Value = "WAM";
+                ws.Cells[2, 8].Value = "%";
+                ws.Cells[2, 9].Value = "PMPn";
+                ws.Cells[2, 10].Value = "max(P)";
+                ws.Cells[2, 11].Value = "min(P)";
+                ws.Cells[2, 12].Value = "PMPn₋₁";
+                ws.Cells[2, 13].Value = "RP+";
+                ws.Cells[2, 14].Value = "RP-";
+                ws.Cells[2, 15].Value = "Tendencia";
+                ws.Cells[2, 16].Value = "Difn";
+                ws.Cells[2, 17].Value = "Prom";
+                ws.Cells[2, 18].Value = "σ";
+                ws.Cells[2, 19].Value = "Señal";
+
+                // Aplicar estilos a columnas básicas (1-6)
+                using (var range = ws.Cells[1, 1, 2, 6])
+                {
+                    range.Style.Font.Bold = true;
+                    range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                    range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    range.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                }
+
+                // Aplicar estilos a grupos con colores
+                // Compuesto (#4a55c4 - azul)
+                using (var range = ws.Cells[1, 7, 2, 8])
+                {
+                    range.Style.Font.Bold = true;
+                    range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(74, 85, 196));
+                    range.Style.Font.Color.SetColor(System.Drawing.Color.White);
+                    range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    range.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                }
+
+                // Algoritmo PMPn (#667eea - violeta)
+                using (var range = ws.Cells[1, 9, 2, 12])
+                {
+                    range.Style.Font.Bold = true;
+                    range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(102, 126, 234));
+                    range.Style.Font.Color.SetColor(System.Drawing.Color.White);
+                    range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    range.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                }
+
+                // Rango Primario (#f59e0b - naranja)
+                using (var range = ws.Cells[1, 13, 2, 14])
+                {
+                    range.Style.Font.Bold = true;
+                    range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(245, 158, 11));
+                    range.Style.Font.Color.SetColor(System.Drawing.Color.White);
+                    range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    range.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                }
+
+                // Tendencia (#10b981 - verde)
+                using (var range = ws.Cells[1, 15, 2, 15])
+                {
+                    range.Style.Font.Bold = true;
+                    range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(16, 185, 129));
+                    range.Style.Font.Color.SetColor(System.Drawing.Color.White);
+                    range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    range.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                }
+
+                // Separación (#8b5cf6 - morado)
+                using (var range = ws.Cells[1, 16, 2, 18])
+                {
+                    range.Style.Font.Bold = true;
+                    range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(139, 92, 246));
+                    range.Style.Font.Color.SetColor(System.Drawing.Color.White);
+                    range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    range.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                }
+
+                // Señal (#ef4444 - rojo)
+                using (var range = ws.Cells[1, 19, 2, 19])
+                {
+                    range.Style.Font.Bold = true;
+                    range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(239, 68, 68));
+                    range.Style.Font.Color.SetColor(System.Drawing.Color.White);
+                    range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    range.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                }
+
+                // Llenar datos desde la fila 3
+                int row = 3;
+                int rowNumber = 1;
+                foreach (var rate in rates)
+                {
+                    ws.Cells[row, 1].Value = rowNumber;
+                    ws.Cells[row, 2].Value = rate.TIME;
+                    ws.Cells[row, 3].Value = rate.OPEN;
+                    ws.Cells[row, 4].Value = rate.HIGH;
+                    ws.Cells[row, 5].Value = rate.LOW;
+                    ws.Cells[row, 6].Value = rate.CLOSE;
+                    ws.Cells[row, 7].Value = rate.CalculatedWAM;
+                    ws.Cells[row, 8].Value = rate.PercentageDifference;
+                    ws.Cells[row, 9].Value = rate.PMPn;
+                    ws.Cells[row, 10].Value = rate.MaxP;
+                    ws.Cells[row, 11].Value = rate.MinP;
+                    ws.Cells[row, 12].Value = rate.PreviousPMPn;
+                    ws.Cells[row, 13].Value = rate.RPPlus;
+                    ws.Cells[row, 14].Value = rate.RPMinus;
+                    ws.Cells[row, 15].Value = rate.Tendencia;
+                    ws.Cells[row, 16].Value = rate.Difn;
+                    ws.Cells[row, 17].Value = rate.PromDifn;
+                    ws.Cells[row, 18].Value = rate.SigmaDifn;
+                    ws.Cells[row, 19].Value = rate.Signal;
+
+                    // Formatos numéricos
+                    ws.Cells[row, 3, row, 6].Style.Numberformat.Format = "0.00000"; // OHLC
+                    ws.Cells[row, 7].Style.Numberformat.Format = "0.00000"; // WAM
+                    ws.Cells[row, 8].Style.Numberformat.Format = "0.0000\"%\""; // %
+                    ws.Cells[row, 9].Style.Numberformat.Format = "0.00000"; // PMPn
+                    ws.Cells[row, 10, row, 11].Style.Numberformat.Format = "0.00000"; // MaxP, MinP
+                    ws.Cells[row, 12].Style.Numberformat.Format = "0.00000"; // PreviousPMPn
+                    ws.Cells[row, 13, row, 14].Style.Numberformat.Format = "0.0000\"%\""; // RP+, RP-
+                    ws.Cells[row, 16, row, 18].Style.Numberformat.Format = "0.00000"; // Difn, PromDifn, SigmaDifn
+
+                    // Colores condicionales
+                    if (rate.PercentageDifference >= 0)
+                        ws.Cells[row, 8].Style.Font.Color.SetColor(System.Drawing.Color.Green);
+                    else
+                        ws.Cells[row, 8].Style.Font.Color.SetColor(System.Drawing.Color.Red);
+
+                    // Colores para Tendencia (columna 15)
+                    if (rate.Tendencia == "ALZA")
+                        ws.Cells[row, 15].Style.Font.Color.SetColor(System.Drawing.Color.Green);
+                    else if (rate.Tendencia == "BAJA")
+                        ws.Cells[row, 15].Style.Font.Color.SetColor(System.Drawing.Color.Red);
+                    else if (rate.Tendencia == "NEUTRO")
+                        ws.Cells[row, 15].Style.Font.Color.SetColor(System.Drawing.Color.Gray);
+
+                    // Colores para Señal (columna 19)
+                    if (rate.Signal == "COMPRA")
+                    {
+                        ws.Cells[row, 19].Style.Font.Color.SetColor(System.Drawing.Color.White);
+                        ws.Cells[row, 19].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                        ws.Cells[row, 19].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Green);
+                        ws.Cells[row, 19].Style.Font.Bold = true;
+                    }
+                    else if (rate.Signal == "VENTA")
+                    {
+                        ws.Cells[row, 19].Style.Font.Color.SetColor(System.Drawing.Color.White);
+                        ws.Cells[row, 19].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                        ws.Cells[row, 19].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Red);
+                        ws.Cells[row, 19].Style.Font.Bold = true;
+                    }
+                    else if (rate.Signal == "NINGUNA")
+                    {
+                        ws.Cells[row, 19].Style.Font.Color.SetColor(System.Drawing.Color.Gray);
+                    }
+
+                    row++;
+                    rowNumber++;
+                }
+
+                ws.Cells[ws.Dimension.Address].AutoFitColumns();
+                _logger.LogInformation($"EXCEL WITH ALGORITHM: Generado con {rates.Count} registros y 19 columnas");
+
+                return package.GetAsByteArray();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating Excel with algorithm");
+            return null;
+        }
+    }
+
     public void DisconnectFromMetaTrader()
     {
         // Logic to disconnect from MetaTrader

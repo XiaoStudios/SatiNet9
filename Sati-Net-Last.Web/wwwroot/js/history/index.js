@@ -4,6 +4,9 @@ $(document).ready(function() {
 
 var HistoryJS =
 {
+    // Estado para recordar si se cargó con algoritmo
+    lastLoadedWithAlgorithm: false,
+    
     Init: () => {
         HistoryJS.ResetFilters();
         HistoryJS.SetupEventHandlers();
@@ -24,8 +27,9 @@ var HistoryJS =
         $('#wamPeriodDropdown').val('20')
         $('#pmpnPeriod').text($('#wamPeriodDropdown').val());
 
-        // Deshabilitar botón de Excel
-        $('#btnDownloadExcel').prop('disabled', true);
+        // Ocultar botones de Excel
+        $('#excelButtonsContainer').hide();
+        $('#dataTableContainer').hide();
         
         // Desactivar algoritmo y deshabilitar campos relacionados
         $('#enableAlgorithm').prop('checked', false);
@@ -50,6 +54,14 @@ var HistoryJS =
             // Opciones de visualización (solo relevantes con algoritmo activo)
             $('#visualizationOptions').css('opacity', isChecked ? '1' : '0.5');
             $('#visualizationOptions input[type="checkbox"]').prop('disabled', !isChecked);
+            
+            // Si hay datos cargados y cambia el checkbox, ocultar tabla y Excel
+            // para forzar recarga con la nueva configuración
+            if ($('#dataTableContainer').is(':visible')) {
+                $('#dataTableContainer').hide();
+                $('#excelButtonsContainer').hide();
+                alert('El modo de cálculo ha cambiado. Por favor, recarga el historial.');
+            }
         });
 
         $('#btnLoadHistory').click(HistoryJS.LoadPriceHistory);
@@ -115,12 +127,18 @@ var HistoryJS =
                     }));
                     drawHistoryChart('historyChartContainer', candles);
                     
-                    HistoryJS.RenderHybridDataTable(data, enableAlgorithm),
+                    HistoryJS.RenderHybridDataTable(data, enableAlgorithm);
                     
-                    // Mostrar tabla y habilitar
+                    // Guardar estado del algoritmo
+                    HistoryJS.lastLoadedWithAlgorithm = enableAlgorithm;
+                    
+                    // Mostrar tabla y botón de Excel
                     $('#dataTableContainer').show();
+                    $('#excelButtonsContainer').show();
                     $('#wamPeriodLabel').text(`WAM ${wamPeriod}`);
                     $('#chartSymbolLabel').text(symbol);
+                    
+                    // Habilitar botón
                     $('#btnDownloadExcel').prop('disabled', false);
                 }
                 else {
@@ -308,24 +326,74 @@ var HistoryJS =
         return tableColumns;
     },
     DownloadExcel: () => {
-        const symbol = document.getElementById('symbolDropdown').value;
-        const dateFilter = document.getElementById('dateFilter').value;
-        const wamPeriod = document.getElementById('wamPeriodDropdown').value;
+        const symbol = $('#symbolDropdown').val();
+        const dateFilter = $('#dateFilter').val();
+        const wamPeriod = $('#wamPeriodDropdown').val();
 
         if (!symbol || !dateFilter) {
             alert('Por favor selecciona un símbolo y una fecha');
             return;
         }
 
-        try {
-            const url = '@Url.Action("GetDatePriceHistoryExcel", "HistoryMT")' + `?dateFilter=${dateFilter}&symbolStr=${encodeURIComponent(symbol)}&wamPeriod=${wamPeriod}`;
+        // Deshabilitar botón y mostrar loading
+        $('#btnDownloadExcel').prop('disabled', true).text('🔄 Descargando...');
+        CommonSatiUI.ShowLoading();
 
-            console.log('Descargando Excel desde:', url);
-            window.location.href = url;
-        } catch (error) {
-            console.error('Error downloading Excel:', error);
-            alert('Error al descargar el archivo Excel.');
+        let url = '/HistoryMT';
+        let params = {
+            dateFilter: dateFilter,
+            symbolStr: symbol,
+            wamPeriod: wamPeriod
+        };
+        
+        if (HistoryJS.lastLoadedWithAlgorithm) {
+            url += '/GetDatePriceHistoryExcelWithAlgorithm';
+            // Agregar parámetros del algoritmo
+            params.pt = $('#paramPt').val();
+            params.pr = $('#paramPr').val();
+            params.sigma = $('#paramSigma').val();
+            params.mp = $('#paramMp').val();
+            params.fd = $('#paramFd').val();
+        } else {
+            url += '/GetDatePriceHistoryExcel';
         }
+
+        $.ajax({
+            url: url,
+            type: 'GET',
+            data: params,
+            xhrFields: {
+                responseType: 'blob'
+            },
+            success: function(blob) {
+                // Crear un link temporal para descargar el blob
+                const link = document.createElement('a');
+                const blobUrl = window.URL.createObjectURL(blob);
+                
+                const modeText = HistoryJS.lastLoadedWithAlgorithm ? 'Algoritmo' : 'Basico';
+                const fileName = `Historial_${symbol}_${dateFilter.replace(/-/g, '')}_${modeText}.xlsx`;
+                
+                link.href = blobUrl;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                
+                // Limpiar
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(blobUrl);
+                
+                console.log('Archivo Excel descargado:', fileName);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error descargando Excel:', error);
+                alert('Error al descargar el archivo Excel. Verifica que el servidor esté funcionando.');
+            },
+            complete: function() {
+                // Ocultar loading y rehabilitar botón
+                CommonSatiUI.HideLoading();
+                $('#btnDownloadExcel').prop('disabled', false).text('📊 Descargar Excel');
+            }
+        });
     }
 }
 

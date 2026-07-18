@@ -153,11 +153,11 @@ public class MetaTraderController : ControllerBase
             var parameters = new ParametersAlgorithmDto
             {
                 Period = wamPeriod,
-                Pt = pt ?? 0.30,
+                Pt = pt ?? 0.05,
                 Pr = pr ?? 0.75,
                 Sigma = sigma ?? 2.0,
                 Mp = mp ?? 1000,
-                Fd = fd ?? 0.95
+                Fd = fd ?? 0.10
             };
 
             if (!parameters.IsValid())
@@ -176,6 +176,71 @@ public class MetaTraderController : ControllerBase
         {
             _logger.LogError(ex, "Error en GetDatePriceHistoryWithAlgorithm");
             return StatusCode(500, "Error al calcular el algoritmo");
+        }
+    }
+
+    [HttpGet("GetDatePriceHistoryExcelWithAlgorithm")]
+    public async Task<IActionResult> GetDatePriceHistoryExcelWithAlgorithm(
+        DateTime dateFilter,
+        string symbolStr,
+        int wamPeriod,
+        [FromQuery] double? pt = null,
+        [FromQuery] double? pr = null,
+        [FromQuery] double? sigma = null,
+        [FromQuery] double? mp = null,
+        [FromQuery] double? fd = null)
+    {
+        try
+        {
+            _logger.LogInformation($"GetDatePriceHistoryExcelWithAlgorithm: {symbolStr}, {dateFilter:yyyy-MM-dd}, WAM {wamPeriod}");
+
+            // 1. Obtener datos básicos con WAM
+            var rates = await _metaTrader.GetDatePriceHistoryAsync(dateFilter, symbolStr, wamPeriod);
+
+            if (rates == null || rates.Count == 0)
+            {
+                return NotFound("No hay datos disponibles");
+            }
+
+            // 2. Configurar parámetros del algoritmo
+            var parameters = new ParametersAlgorithmDto
+            {
+                Period = wamPeriod,
+                Pt = pt ?? 0.05,
+                Pr = pr ?? 0.75,
+                Sigma = sigma ?? 2.0,
+                Mp = mp ?? 1000,
+                Fd = fd ?? 0.10
+            };
+
+            if (!parameters.IsValid())
+            {
+                return BadRequest("Parámetros del algoritmo inválidos");
+            }
+
+            // 3. Calcular algoritmo operativo (BATCH)
+            rates = _operativeAlgorithmSvc.CalculateBatch(rates, wamPeriod, parameters);
+
+            _logger.LogInformation($"Algoritmo calculado. Generando Excel con 19 columnas...");
+
+            // 4. Generar Excel con todas las columnas del algoritmo
+            var excelBytes = _metaTrader.GetDatePriceHistoryExcelWithAlgorithm(rates, symbolStr, dateFilter, wamPeriod);
+
+            if (excelBytes == null)
+            {
+                return NotFound("Error al generar el archivo Excel");
+            }
+
+            return File(
+                excelBytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"Historial_{symbolStr}_{dateFilter:yyyyMMdd}_Algoritmo.xlsx"
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating Excel with algorithm.");
+            return StatusCode(500, "Internal server error while generating Excel file with algorithm.");
         }
     }
 
