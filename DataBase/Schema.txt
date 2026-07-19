@@ -1,0 +1,24 @@
+/***********/
+Historico de cambios de moneda
+/***********/
+
+use sati_dev;
+drop table Rates;
+CREATE TABLE Rates (
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    SymbolStr VARCHAR(16) NOT NULL,
+    TIME VARCHAR(20) NOT NULL,
+    OPEN DOUBLE NOT NULL,
+    HIGH DOUBLE NOT NULL,
+    LOW DOUBLE NOT NULL,
+    CLOSE DOUBLE NOT NULL,
+    TICK_VOLUME INT NOT NULL,
+    SPREAD INT NOT NULL,
+    REAL_VOLUME INT NOT NULL,
+    Time_MT_Api VARCHAR(20) NOT NULL
+);
+ALTER TABLE rates ADD COLUMN FECHA VARCHAR(20);
+ALTER TABLE rates ADD COLUMN HORA VARCHAR(10);
+
+
+/***********/

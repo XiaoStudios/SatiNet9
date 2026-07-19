@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explicación del Algoritmo Operativo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            padding: 30px;
+        }
+        
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .title-section {
+            text-align: center;
+            margin-bottom: 50px;
+            padding-bottom: 30px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .title-section h1 {
+            color: #2c3e50;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+        
+        .title-section p {
+            color: #6c757d;
+            font-size: 1.2rem;
+        }
+        
+        .step-container {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border-left: 6px solid #667eea;
+        }
+        
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .step-number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-right: 20px;
+        }
+        
+        .step-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 0;
+        }
+        
+        .formula-box {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+        }
+        
+        .formula-title {
+            color: #667eea;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        
+        .example-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 6px;
+        }
+        
+        .example-title {
+            color: #0d47a1;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        
+        .flow-diagram {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 25px 0;
+        }
+        
+        .flow-step {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .flow-arrow {
+            text-align: center;
+            color: #667eea;
+            font-size: 2rem;
+            margin: 10px 0;
+        }
+        
+        .condition-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        
+        .condition-title {
+            color: #856404;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .signal-box {
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 600;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+        
+        .signal-buy {
+            background: #d4edda;
+            border: 3px solid #28a745;
+            color: #155724;
+        }
+        
+        .signal-sell {
+            background: #f8d7da;
+            border: 3px solid #dc3545;
+            color: #721c24;
+        }
+        
+        .data-table {
+            width: 100%;
+            margin: 20px 0;
+            border-collapse: collapse;
+        }
+        
+        .data-table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            border: 1px solid white;
+        }
+        
+        .data-table td {
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            text-align: center;
+        }
+        
+        .highlight-value {
+            background: #fff3cd;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        
+        .visual-timeline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 30px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+        }
+        
+        .timeline-item {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .timeline-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .timeline-arrow {
+            color: #667eea;
+            font-size: 2rem;
+        }
+        
+        .parameter-card {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .parameter-name {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+        
+        .parameter-value {
+            color: #2c3e50;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+        }
+        
+        .parameter-desc {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="title-section">
+            <h1>📊 Algoritmo Operativo de Trading</h1>
+            <p>Explicación detallada con ejemplos visuales</p>
+        </div>
+        
+        <!-- PASO 1: Parámetros -->
+        <div class="step-container">
+            <div class="step-header">
+                <div class="step-number">1</div>
+                <h2 class="step-title">Parámetros de Entrada</h2>
+            </div>
+            
+            <p style="font-size: 1.1rem; color: #495057; margin-bottom: 25px;">
+                El algoritmo requiere configurar estos parámetros antes de calcular las señales:
+            </p>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="parameter-card">
+                        <div class="parameter-name">n (Período)</div>
+                        <div class="parameter-value">Valor: 20 o 50 (tomado del Período WAM)</div>
+                        <div class="parameter-desc">
+                            Número de elementos para el promedio móvil ponderado. 
+                            Se recomienda usar 50 para mejor precisión.
+                        </div>
+                    </div>
+                    
+                    <div class="parameter-card">
+                        <div class="parameter-name">pt (Parámetro de Tendencia)</div>
+                        <div class="parameter-value">Valor predeterminado: 0.30</div>
+                        <div class="parameter-desc">
+                            Umbral para establecer si existe tendencia.
+                            Si RP± ≥ pt, entonces existe tendencia.
+                        </div>
+                    </div>
+                    
+                    <div class="parameter-card">
+                        <div class="parameter-name">pr (Parámetro de Rompimiento)</div>
+                        <div class="parameter-value">Valor predeterminado: 0.75 (75%)</div>
+                        <div class="parameter-desc">
+                            Porcentaje para detectar rompimiento de tendencia.
+                            Si RP⁻/RP⁺ ≥ pr o RP⁺/RP⁻ ≥ pr, hay rompimiento.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="parameter-card">
+                        <div class="parameter-name">σ (Sigma)</div>
+                        <div class="parameter-value">Valor predeterminado: 2.0</div>
+                        <div class="parameter-desc">
+                            Multiplicador de desviación estándar para validar señales.
+                            Controla la precisión de las condiciones de entrada.
+                        </div>
+                    </div>
+                    
+                    <div class="parameter-card">
+                        <div class="parameter-name">mp (Importe Inicial)</div>
+                        <div class="parameter-value">Valor predeterminado: €1000</div>
+                        <div class="parameter-desc">
+                            Importe inicial para acumulación de operaciones en tendencia.
+                        </div>
+                    </div>
+                    
+                    <div class="parameter-card">
+                        <div class="parameter-name">fd (Factor Decreciente)</div>
+                        <div class="parameter-value">Valor predeterminado: 0.95</div>
+                        <div class="parameter-desc">
+                            Factor para reducir el importe en operaciones sucesivas.
+                            IMP<sub>i</sub> = mp × (1 - fd)<sup>i-1</sup>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PASO 2: Cálculo de Máximo y Mínimo -->
+        <div class="step-container">
+            <div class="step-header">
+                <div class="step-number">2</div>
+                <h2 class="step-title">Cálculo de Máximo y Mínimo (PMPn)</h2>
+            </div>
+            
+            <p style="font-size: 1.1rem; color: #495057;">
+                El <strong>Promedio Móvil Ponderado PMPn</strong> se calcula para el máximo y mínimo de los últimos n elementos:
+            </p>
+            
+            <div class="formula-box">
+                <div class="formula-title">CUANDO i = 1 (primer elemento):</div>
+                P₁ = Pᵢ = <span class="highlight-value">PMPnᵢ</span> = max(P) = min(P)
+            </div>
+            
+            <div class="formula-box">
+                <div class="formula-title">PARA i > 1 (elementos siguientes):</div>
+                Si PMPnᵢ ≥ max(P) entonces <span class="highlight-value">max(P) = PMPnᵢ</span><br>
+                Si PMPnᵢ ≤ min(P) entonces <span class="highlight-value">min(P) = PMPnᵢ</span>
+            </div>
+            
+            <div class="example-box">
+                <div class="example-title">📌 Ejemplo Práctico:</div>
+                <p><strong>Tenemos precios de EURUSD:</strong></p>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>i</th>
+                            <th>Precio (Pᵢ)</th>
+                            <th>PMPnᵢ</th>
+                            <th>max(P)</th>
+                            <th>min(P)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>1.08450</td>
+                            <td style="background: #d4edda;">1.08450</td>
+                            <td style="background: #fff3cd;">1.08450</td>
+                            <td style="background: #f8d7da;">1.08450</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>1.08520</td>
+                            <td>1.08485</td>
+                            <td style="background: #fff3cd;">1.08485</td>
+                            <td style="background: #f8d7da;">1.08450</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>1.08600</td>
+                            <td style="background: #d4edda;">1.08550</td>
+                            <td style="background: #fff3cd;">1.08550 ✓</td>
+                            <td style="background: #f8d7da;">1.08450</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>1.08430</td>
+                            <td style="background: #d4edda;">1.08400</td>
+                            <td style="background: #fff3cd;">1.08550</td>
+                            <td style="background: #f8d7da;">1.08400 ✓</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p style="margin-top: 15px; color: #495057;">
+                    <strong>✓</strong> indica cuando max(P) o min(P) se actualiza con el nuevo PMPnᵢ
+                </p>
+            </div>
+        </div>
+        
+        <!-- PASO 3: Rangos Primarios -->
+        <div class="step-container">
+            <div class="step-header">
+                <div class="step-number">3</div>
+                <h2 class="step-title">Cálculo de Rangos Primarios (RP⁺ y RP⁻)</h2>
+            </div>
+            
+            <p style="font-size: 1.1rem; color: #495057;">
+                Los rangos primarios miden la distancia entre el PMPn actual y los extremos históricos:
+            </p>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="formula-box">
+                        <div class="formula-title">RANGO PRIMARIO POSITIVO (RP⁺):</div>
+                        RP⁺ = |PMPnᵢ - min(P)|
+                    </div>
+                    
+                    <div class="example-box">
+                        <div class="example-title">Ejemplo RP⁺:</div>
+                        PMPnᵢ = 1.08550<br>
+                        min(P) = 1.08400<br>
+                        <strong>RP⁺ = |1.08550 - 1.08400| = 0.00150</strong>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="formula-box">
+                        <div class="formula-title">RANGO PRIMARIO NEGATIVO (RP⁻):</div>
+                        RP⁻ = |max(P) - PMPnᵢ|
+                    </div>
+                    
+                    <div class="example-box">
+                        <div class="example-title">Ejemplo RP⁻:</div>
+                        max(P) = 1.08600<br>
+                        PMPnᵢ = 1.08550<br>
+                        <strong>RP⁻ = |1.08600 - 1.08550| = 0.00050</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PASO 4: Detección de Tendencia -->
+        <div class="step-container">
+            <div class="step-header">
+                <div class="step-number">4</div>
+                <h2 class="step-title">Detección de Tendencia</h2>
+            </div>
+            
+            <p style="font-size: 1.1rem; color: #495057; margin-bottom: 25px;">
+                La tendencia se establece comparando los rangos primarios con el parámetro <strong>pt</strong>:
+            </p>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="condition-box" style="border-color: #28a745; background: #d4edda;">
+                        <div class="condition-title" style="color: #155724;">
+                            ↗ TENDENCIA AL ALZA
+                        </div>
+                        <div class="formula-box" style="background: white; border-color: #28a745;">
+                            RP⁺ ≥ pt
+                        </div>
+                        <div class="example-box" style="background: white;">
+                            <strong>Ejemplo:</strong><br>
+                            RP⁺ = 0.00150<br>
+                            pt = 0.30<br>
+                            Resultado: 0.00150 ≥ 0.30 ✓
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="condition-box" style="border-color: #dc3545; background: #f8d7da;">
+                        <div class="condition-title" style="color: #721c24;">
+                            ↘ TENDENCIA A LA BAJA
+                        </div>
+                        <div class="formula-box" style="background: white; border-color: #dc3545;">
+                            RP⁻ ≥ pt
+                        </div>
+                        <div class="example-box" style="background: white;">
+                            <strong>Ejemplo:</strong><br>
+                            RP⁻ = 0.00050<br>
+                            pt = 0.30<br>
+                            Resultado: 0.00050 ≥ 0.30 ✓
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="condition-box" style="margin-top: 20px;">
+                <div class="condition-title">⚠️ Detección de Rompimiento de Tendencia:</div>
+                <div class="formula-box" style="background: white;">
+                    <strong>Rompimiento al alza:</strong> RP⁻ / RP⁺ ≥ pr<br>
+                    <strong>Rompimiento a la baja:</strong> RP⁺ / RP⁻ ≥ pr
+                </div>
+                <p style="margin-top: 10px; color: #856404;">
+                    Cuando se detecta un rompimiento, se actualiza:<br>
+                    <strong>Al alza:</strong> min(P) = PMPnᵢ<br>
+                    <strong>A la baja:</strong> max(P) = PMPnᵢ
+                </p>
+            </div>
+        </div>
+        
+        <!-- PASO 5: Separación y Desviación -->
+        <div class="step-container">
+            <div class="step-header">
+                <div class="step-number">5</div>
+                <h2 class="step-title">Separación entre PMPn y Precio (Difn)</h2>
+            </div>
+            
+            <p style="font-size: 1.1rem; color: #495057;">
+                La separación mide qué tan lejos está el precio actual del PMPn:
+            </p>
+            
+            <div class="formula-box">
+                <div class="formula-title">FÓRMULA DE SEPARACIÓN:</div>
+                Difnᵢ = (|PMPnᵢ - Pᵢ|)
+            </div>
+            
+            <div class="formula-box">
+                <div class="formula-title">PROMEDIO DE SEPARACIONES:</div>
+                Prom Difnᵢ₋₁ = Σⱼ₌₁ⁱ⁻¹ Difnⱼ / (i - 1)
+            </div>
+            
+            <div class="formula-box">
+                <div class="formula-title">DESVIACIÓN ESTÁNDAR:</div>
+                σDifnᵢ₋₁ = σ{Difn₁, Difn₂, ... Difnᵢ₋₁}
+            </div>
+            
+            <div class="example-box">
+                <div class="example-title">📌 Ejemplo de Cálculo:</div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>i</th>
+                            <th>PMPnᵢ</th>
+                            <th>Pᵢ</th>
+                            <th>Difnᵢ</th>
+                            <th>Prom Difn</th>
+                            <th>σDifn</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>1.08450</td>
+                            <td>1.08450</td>
+                            <td>0.00000</td>
+                            <td>—</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>1.08485</td>
+                            <td>1.08520</td>
+                            <td>0.00035</td>
+                            <td>0.00000</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>1.08550</td>
+                            <td>1.08600</td>
+                            <td>0.00050</td>
+                            <td>0.00018</td>
+                            <td>0.00025</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>1.08400</td>
+                            <td>1.08430</td>
+                            <td>0.00030</td>
+                            <td>0.00028</td>
+                            <td>0.00021</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- PASO 6: Condiciones de Señal -->
+        <div class="step-container">
+            <div class="step-header">
+                <div class="step-number">6</div>
+                <h2 class="step-title">Condiciones para Emisión de Señales</h2>
+            </div>
+            
+            <p style="font-size: 1.1rem; color: #495057; margin-bottom: 25px;">
+                Se emite una orden cuando se cumplen <strong>LAS 4 CONDICIONES</strong> simultáneamente:
+            </p>
+            
+            <!-- SEÑAL DE COMPRA -->
+            <div class="signal-box signal-buy">
+                🟢 SEÑAL DE COMPRA
+            </div>
+            
+            <div class="flow-diagram">
+                <div class="flow-step">
+                    <strong>Condición 1:</strong> Existe tendencia al alza<br>
+                    RP⁺ ≥ pt
+                </div>
+                <div class="flow-arrow">↓</div>
+                
+                <div class="flow-step">
+                    <strong>Condición 2:</strong> PMPn alcanza el máximo<br>
+                    PMPnᵢ = max(P)
+                </div>
+                <div class="flow-arrow">↓</div>
+                
+                <div class="flow-step">
+                    <strong>Condición 3:</strong> PMPn cambió respecto al anterior<br>
+                    PMPnᵢ ≠ PMPnᵢ₋₁
+                </div>
+                <div class="flow-arrow">↓</div>
+                
+                <div class="flow-step">
+                    <strong>Condición 4:</strong> Separación dentro del rango esperado<br>
+                    Difnᵢ ≤ Prom Difnᵢ₋₁ ± 2σDifnᵢ₋₁
+                </div>
+                <div class="flow-arrow">↓</div>
+                
+                <div class="signal-box signal-buy">
+                    ✅ TODAS CUMPLIDAS → EMITIR ORDEN DE COMPRA
+                </div>
+            </div>
+            
+            <!-- SEÑAL DE VENTA -->
+            <div class="signal-box signal-sell" style="margin-top: 40px;">
+                🔴 SEÑAL DE VENTA
+            </div>
+            
+            <div class="flow-diagram">
+                <div class="flow-step">
+                    <strong>Condición 1:</strong> Existe tendencia a la baja<br>
+                    RP⁻ ≥ pt
+                </div>
+                <div class="flow-arrow">↓</div>
+                
+                <div class="flow-step">
+                    <strong>Condición 2:</strong> PMPn alcanza el mínimo<br>
+                    PMPnᵢ = min(P)
+                </div>
+                <div class="flow-arrow">↓</div>
+                
+                <div class="flow-step">
+                    <strong>Condición 3:</strong> PMPn cambió respecto al anterior<br>
+                    PMPnᵢ ≠ PMPnᵢ₋₁
+                </div>
+                <div class="flow-arrow">↓</div>
+                
+                <div class="flow-step">
+                    <strong>Condición 4:</strong> Separación dentro del rango esperado<br>
+                    Difnᵢ ≤ Prom Difnᵢ₋₁ ± 2σDifnᵢ₋₁
+                </div>
+                <div class="flow-arrow">↓</div>
+                
+                <div class="signal-box signal-sell">
+                    ✅ TODAS CUMPLIDAS → EMITIR ORDEN DE VENTA
+                </div>
+            </div>
+        </div>
+        
+        <!-- PASO 7: Importe de Acumulación -->
+        <div class="step-container">
+            <div class="step-header">
+                <div class="step-number">7</div>
+                <h2 class="step-title">Cálculo del Importe de Acumulación</h2>
+            </div>
+            
+            <p style="font-size: 1.1rem; color: #495057;">
+                El importe para cada operación decrece con el tiempo según la fórmula:
+            </p>
+            
+            <div class="formula-box">
+                <div class="formula-title">FÓRMULA DEL IMPORTE:</div>
+                IMP<sub>i</sub> = mp × (1 - fd)<sup>i-1</sup>
+                <br><br>
+                Donde:<br>
+                • <strong>mp</strong> = importe inicial (ej: €1000)<br>
+                • <strong>fd</strong> = factor decreciente (ej: 0.95)<br>
+                • <strong>i</strong> = número de operación en la tendencia
+            </div>
+            
+            <div class="example-box">
+                <div class="example-title">📌 Ejemplo de Acumulación:</div>
+                <p><strong>Parámetros:</strong> mp = €1000, fd = 0.95</p>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Operación (i)</th>
+                            <th>Cálculo</th>
+                            <th>IMP<sub>i</sub></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>1000 × (1 - 0.95)<sup>0</sup></td>
+                            <td style="background: #d4edda;">€1000.00</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>1000 × (1 - 0.95)<sup>1</sup></td>
+                            <td style="background: #d4edda;">€50.00</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>1000 × (1 - 0.95)<sup>2</sup></td>
+                            <td style="background: #d4edda;">€2.50</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>1000 × (1 - 0.95)<sup>3</sup></td>
+                            <td style="background: #d4edda;">€0.13</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p style="margin-top: 15px; color: #495057;">
+                    ⚠️ El importe decrece rápidamente, reduciendo el riesgo en operaciones sucesivas hasta llegar a €1 (mínimo).
+                </p>
+            </div>
+        </div>
+        
+        <!-- RESUMEN VISUAL -->
+        <div class="step-container" style="border-left-color: #28a745;">
+            <div class="step-header">
+                <div class="step-number" style="background: #28a745;">✓</div>
+                <h2 class="step-title">Resumen del Flujo Completo</h2>
+            </div>
+            
+            <div class="visual-timeline">
+                <div class="timeline-item">
+                    <div class="timeline-circle">Datos<br>Entrada</div>
+                    <div>Precios + Parámetros</div>
+                </div>
+                <div class="timeline-arrow">→</div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-circle">PMPn<br>max/min</div>
+                    <div>Cálculo de extremos</div>
+                </div>
+                <div class="timeline-arrow">→</div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-circle">RP±</div>
+                    <div>Rangos primarios</div>
+                </div>
+                <div class="timeline-arrow">→</div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-circle">Tendencia</div>
+                    <div>Detección alza/baja</div>
+                </div>
+                <div class="timeline-arrow">→</div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-circle">Difn<br>σ</div>
+                    <div>Separación y estadísticas</div>
+                </div>
+                <div class="timeline-arrow">→</div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-circle" style="background: #28a745;">Señal</div>
+                    <div>Compra/Venta</div>
+                </div>
+            </div>
+            
+            <div class="alert alert-info mt-4">
+                <h5>💡 Puntos Clave:</h5>
+                <ul style="margin-bottom: 0;">
+                    <li>El algoritmo trabaja con <strong>datos históricos en tiempo real</strong></li>
+                    <li>Los cálculos se hacen <strong>iterativamente</strong> para cada nuevo precio</li>
+                    <li>Las señales solo se emiten cuando <strong>las 4 condiciones se cumplen simultáneamente</strong></li>
+                    <li>El importe decrece para <strong>limitar el riesgo</strong> en operaciones consecutivas</li>
+                    <li>El período <strong>n (20 o 50)</strong> afecta la sensibilidad del algoritmo</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- FOOTER -->
+        <div style="text-align: center; margin-top: 50px; padding-top: 30px; border-top: 2px solid #dee2e6;">
+            <p style="color: #6c757d;">
+                📚 Este documento explica el algoritmo operativo implementado en el sistema Sati-Net-Last<br>
+                Para más información, consulta la documentación adjunta en PDF
+            </p>
+        </div>
+    </div>
+</body>
+</html>
