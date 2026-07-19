@@ -273,17 +273,12 @@ function updateTraderChart(newData) {
 }
 
 /**
- * Convierte una cadena de tiempo a timestamp UNIX (para trader)
+ * Convierte una cadena de tiempo a timestamp UNIX (para trader en tiempo real)
+ * @deprecated Usar CommonSatiUI.GetRealtimeTimestamp directamente
  */
 function getUnixTimeStampForTrader(timeStr) {
     if (!timeStr) return Math.floor(Date.now() / 1000);
-
-    if (typeof timeStr === "string" && timeStr.includes(".")) {
-        const [datePart, timePart] = timeStr.split(" ");
-        let iso = datePart.replace(/\./g, "-") + "T" + (timePart || "00:00:00");
-        if (!iso.endsWith("Z")) iso += "Z";
-        return Math.floor(new Date(iso).getTime() / 1000);
-    }
     
-    return Math.floor(new Date(timeStr).getTime() / 1000);
+    // Usar el método centralizado para tiempo real
+    return CommonSatiUI.GetRealtimeTimestamp(timeStr);
 }
