@@ -5,6 +5,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Sati_Net_Last.Web</RootNamespace>
+    <!-- Desactivar compresión de StaticWebAssets en desarrollo (bug .NET 9 con dotnet watch) -->
+    <EnableStaticWebAssetsBuildCompression>false</EnableStaticWebAssetsBuildCompression>
   </PropertyGroup>
 
   <ItemGroup>

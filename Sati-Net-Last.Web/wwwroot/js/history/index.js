@@ -199,10 +199,12 @@ var HistoryJS =
                 <!-- Columnas básicas -->
                 <th rowspan="2" style="padding: 10px; text-align: center; width: 50px;">#</th>
                 <th rowspan="2" style="padding: 10px; text-align: left; width: 130px;">Time</th>
+                <!--
                 <th rowspan="2" style="padding: 10px; text-align: right;">Open</th>
                 <th rowspan="2" style="padding: 10px; text-align: right;">High</th>
                 <th rowspan="2" style="padding: 10px; text-align: right;">Low</th>
                 <th rowspan="2" style="padding: 10px; text-align: right;">Close</th>
+                -->
 
                 <!-- Columnas WAM existentes -->
                 <th colspan="2" style="padding: 10px; text-align: center; background: #4a55c4; color: white;">Compuesto</th>
@@ -283,6 +285,7 @@ var HistoryJS =
         ];
 
         if (withAlgorithm) {
+            tableColumns.splice(1,4);// open, high, low and close are removed for the algorithm calculus
             tableColumns.push(
                 { data: 'pmPn', render: (d) => d ? $.fn.dataTable.render.number(',', '.', 5).display(d) : '—' },
                 { data: 'maxP', render: (d) => d ? $.fn.dataTable.render.number(',', '.', 5).display(d) : '—' },
@@ -371,7 +374,7 @@ var HistoryJS =
                 const blobUrl = window.URL.createObjectURL(blob);
                 
                 const modeText = HistoryJS.lastLoadedWithAlgorithm ? 'Algoritmo' : 'Basico';
-                const fileName = `Historial_${symbol}_${dateFilter.replace(/-/g, '')}_${modeText}.xlsx`;
+                const fileName = `Historial_${symbol}_${dateFilter.replace(/-/g, '')}_WAM${wamPeriod}_${modeText}.xlsx`;
                 
                 link.href = blobUrl;
                 link.download = fileName;

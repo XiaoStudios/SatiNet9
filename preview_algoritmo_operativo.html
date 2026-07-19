@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview - History MT con Algoritmo Operativo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f5f7fa;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            padding: 20px;
+        }
+        
+        .preview-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        
+        .section-title {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        
+        .algo-params {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+        }
+        
+        .param-label {
+            font-weight: 600;
+            color: #856404;
+            margin-bottom: 5px;
+        }
+        
+        .signal-buy {
+            background: #d4edda;
+            color: #155724;
+            font-weight: 700;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        
+        .signal-sell {
+            background: #f8d7da;
+            color: #721c24;
+            font-weight: 700;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        
+        .signal-none {
+            background: #e2e3e5;
+            color: #383d41;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        
+        .trend-up {
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .trend-down {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        
+        .trend-neutral {
+            color: #6c757d;
+        }
+        
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .data-table {
+            font-size: 0.85rem;
+            min-width: 1800px;
+        }
+        
+        .data-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .data-table th {
+            background: #5a67d8 !important;
+            color: white !important;
+            padding: 12px 8px !important;
+            text-align: center !important;
+            border: 1px solid white !important;
+            white-space: nowrap;
+        }
+        
+        .data-table th.group-header {
+            background: #4a55c4 !important;
+            font-size: 0.9rem;
+        }
+        
+        .data-table td {
+            padding: 10px 8px;
+            vertical-align: middle;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .data-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .numeric {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .chart-placeholder {
+            background: #181a20;
+            height: 500px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .legend {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+        
+        .legend-item {
+            display: inline-block;
+            margin-right: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .legend-label {
+            font-weight: 600;
+            margin-right: 5px;
+        }
+        
+        .info-box {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-container">
+        <h1 style="color: #2c3e50; margin-bottom: 10px; font-weight: 700;">
+            📊 History MT - Algoritmo Operativo Integrado
+        </h1>
+        <p style="color: #6c757d; margin-bottom: 30px;">
+            Preview del sistema con cálculos en tiempo real de señales de compra/venta
+        </p>
+        
+        <!-- Sección de filtros principales -->
+        <div class="section-title">
+            1️⃣ Filtros Principales
+        </div>
+        
+        <div class="row g-3 mb-4">
+            <div class="col-md-2">
+                <label class="form-label fw-bold">Símbolo</label>
+                <select class="form-select">
+                    <option>EURUSD</option>
+                    <option>GBPUSD</option>
+                    <option>USDJPY</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold">Fecha</label>
+                <input type="date" class="form-control" value="2026-05-05">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold">Período WAM</label>
+                <select class="form-select">
+                    <option>20</option>
+                    <option selected>50</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" style="opacity: 0;">-</label>
+                <button class="btn btn-primary w-100">Cargar Historial</button>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" style="opacity: 0;">-</label>
+                <button class="btn btn-success w-100">Descargar Excel</button>
+            </div>
+        </div>
+        
+        <!-- Sección de parámetros del algoritmo -->
+        <div class="section-title">
+            2️⃣ Parámetros del Algoritmo Operativo
+        </div>
+        
+        <div class="algo-params">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="param-label">Período PMPn</div>
+                    <div class="form-control" style="background: #e9ecef; color: #495057; font-weight: 600;">
+                        50<small style="font-weight: normal;">(tomado de Período WAM)</small>
+                    </div>
+                    <small class="text-muted">Base para max/min</small>
+                </div>
+                <div class="col-md-2">
+                    <div class="param-label">pt (Tendencia)</div>
+                    <input type="number" class="form-control" value="0.30" step="0.01"
+                           title="Parámetro para establecer tendencia. Si RP± ≥ pt, existe tendencia">
+                    <small class="text-muted">Umbral RP± ≥ pt</small>
+                </div>
+                <div class="col-md-2">
+                    <div class="param-label">pr (Rompimiento %)</div>
+                    <input type="number" class="form-control" value="0.75" step="0.01"
+                           title="Parámetro de rompimiento. Si RP-/RP+ ≥ pr, hay rompimiento">
+                    <small class="text-muted">RP-/RP+ ≥ pr</small>
+                </div>
+                <div class="col-md-2">
+                    <div class="param-label">σ (Sigma)</div>
+                    <input type="number" class="form-control" value="2.0" step="0.1"
+                           title="Multiplicador de desviación estándar para validar señal">
+                    <small class="text-muted">Mult. σDifn</small>
+                </div>
+                <div class="col-md-2">
+                    <div class="param-label">mp (Importe inicial)</div>
+                    <input type="number" class="form-control" value="1000" step="100"
+                           title="Importe inicial para acumulación de operaciones">
+                    <small class="text-muted">Importe base €</small>
+                </div>
+                <div class="col-md-1">
+                    <div class="param-label">fd (Factor)</div>
+                    <input type="number" class="form-control" value="0.95" step="0.01"
+                           title="Factor decreciente del importe de acumulación">
+                    <small class="text-muted">(1-fd)<sup>i-1</sup></small>
+                </div>
+            </div>
+            
+            <div class="mt-3">
+                <button class="btn btn-warning btn-sm">
+                    🔄 Recalcular con nuevos parámetros
+                </button>
+                <button class="btn btn-outline-secondary btn-sm ms-2">
+                    ↺ Restaurar valores por defecto
+                </button>
+            </div>
+        </div>
+        
+        <div class="info-box">
+            <strong>ℹ️ Información:</strong> El <strong>Período PMPn</strong> usa automáticamente el valor seleccionado en 
+            <strong>Período WAM</strong> (20 o 50). El algoritmo calcula los indicadores de tendencia, 
+            rangos primarios (RP+ / RP-), separación precio-PMPn (Difn), y genera señales de compra/venta 
+            cuando se cumplen las 4 condiciones establecidas.
+        </div>
+        
+        <!-- Gráfico -->
+        <div class="section-title">
+            3️⃣ Gráfico con Indicadores
+        </div>
+        
+        <div class="chart-placeholder">
+            📈 Gráfico de velas con PMPn, máx/mín, y señales de compra/venta
+        </div>
+        
+        <!-- Tabla de datos -->
+        <div class="section-title">
+            4️⃣ Datos Detallados con Algoritmo Operativo - <span style="color: #ffd700;">WAM 50</span>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-bordered data-table">
+                <thead>
+                    <!-- Primera fila: encabezados principales -->
+                    <tr>
+                        <th rowspan="2" style="width: 50px;">#</th>
+                        <th rowspan="2" style="width: 140px;">Time</th>
+                        <th rowspan="2">Open</th>
+                        <th rowspan="2">High</th>
+                        <th rowspan="2">Low</th>
+                        <th rowspan="2">Close</th>
+                        <th colspan="2" class="group-header">Compuesto</th>
+                        <th colspan="4" class="group-header">Algoritmo Operativo</th>
+                        <th colspan="2" class="group-header">Rango Primario</th>
+                        <th rowspan="2">Tendencia</th>
+                        <th colspan="3" class="group-header">Separación</th>
+                        <th rowspan="2" style="min-width: 100px;">Señal</th>
+                        <th rowspan="2">IMP<sub>i</sub></th>
+                    </tr>
+                    <!-- Segunda fila: sub-encabezados -->
+                    <tr>
+                        <!-- Compuesto -->
+                        <th>WAM</th>
+                        <th>%</th>
+                        <!-- Algoritmo Operativo -->
+                        <th>PMP<sub>n</sub></th>
+                        <th>max(P)</th>
+                        <th>min(P)</th>
+                        <th>PMP<sub>n-1</sub></th>
+                        <!-- Rango Primario -->
+                        <th>RP<sup>+</sup></th>
+                        <th>RP<sup>-</sup></th>
+                        <!-- Separación -->
+                        <th>Dif<sub>n</sub></th>
+                        <th>Prom Dif<sub>n</sub></th>
+                        <th>σDif<sub>n</sub></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Ejemplo de fila con señal de COMPRA -->
+                    <tr style="background: #d4edda;">
+                        <td class="text-center fw-bold">1</td>
+                        <td>2026-05-05 09:00</td>
+                        <td class="numeric">1.08450</td>
+                        <td class="numeric">1.08520</td>
+                        <td class="numeric">1.08430</td>
+                        <td class="numeric">1.08500</td>
+                        <td class="numeric" style="color: #5a67d8; font-weight: 600;">1.08345</td>
+                        <td class="numeric" style="color: #28a745; font-weight: 600;">+0.1430%</td>
+                        <td class="numeric" style="color: #5a67d8; font-weight: 600;">1.08520</td>
+                        <td class="numeric">1.08520</td>
+                        <td class="numeric">1.08300</td>
+                        <td class="numeric">1.08480</td>
+                        <td class="numeric">0.00220</td>
+                        <td class="numeric">0.00018</td>
+                        <td class="trend-up">↗ ALZA</td>
+                        <td class="numeric">-0.00020</td>
+                        <td class="numeric">-0.00015</td>
+                        <td class="numeric">0.00008</td>
+                        <td class="text-center"><span class="signal-buy">🟢 COMPRA</span></td>
+                        <td class="numeric">€1000.00</td>
+                    </tr>
+                    
+                    <!-- Ejemplo de fila sin señal -->
+                    <tr>
+                        <td class="text-center fw-bold">2</td>
+                        <td>2026-05-05 09:01</td>
+                        <td class="numeric">1.08500</td>
+                        <td class="numeric">1.08550</td>
+                        <td class="numeric">1.08485</td>
+                        <td class="numeric">1.08530</td>
+                        <td class="numeric" style="color: #5a67d8; font-weight: 600;">1.08350</td>
+                        <td class="numeric" style="color: #28a745; font-weight: 600;">+0.1661%</td>
+                        <td class="numeric" style="color: #5a67d8; font-weight: 600;">1.08530</td>
+                        <td class="numeric">1.08550</td>
+                        <td class="numeric">1.08300</td>
+                        <td class="numeric">1.08520</td>
+                        <td class="numeric">0.00250</td>
+                        <td class="numeric">0.00010</td>
+                        <td class="trend-up">↗ ALZA</td>
+                        <td class="numeric">0.00000</td>
+                        <td class="numeric">-0.00010</td>
+                        <td class="numeric">0.00010</td>
+                        <td class="text-center"><span class="signal-none">⚪ —</span></td>
+                        <td class="numeric">—</td>
+                    </tr>
+                    
+                    <!-- Ejemplo de fila con señal de VENTA -->
+                    <tr style="background: #f8d7da;">
+                        <td class="text-center fw-bold">3</td>
+                        <td>2026-05-05 09:02</td>
+                        <td class="numeric">1.08530</td>
+                        <td class="numeric">1.08540</td>
+                        <td class="numeric">1.08420</td>
+                        <td class="numeric">1.08430</td>
+                        <td class="numeric" style="color: #5a67d8; font-weight: 600;">1.08355</td>
+                        <td class="numeric" style="color: #28a745; font-weight: 600;">+0.0693%</td>
+                        <td class="numeric" style="color: #5a67d8; font-weight: 600;">1.08540</td>
+                        <td class="numeric">1.08550</td>
+                        <td class="numeric">1.08420</td>
+                        <td class="numeric">1.08530</td>
+                        <td class="numeric">0.00130</td>
+                        <td class="numeric">0.00120</td>
+                        <td class="trend-down">↘ BAJA</td>
+                        <td class="numeric">0.00110</td>
+                        <td class="numeric">0.00080</td>
+                        <td class="numeric">0.00015</td>
+                        <td class="text-center"><span class="signal-sell">🔴 VENTA</span></td>
+                        <td class="numeric">€1000.00</td>
+                    </tr>
+                    
+                    <!-- Más filas de ejemplo -->
+                    <tr>
+                        <td class="text-center fw-bold">4</td>
+                        <td>2026-05-05 09:03</td>
+                        <td class="numeric">1.08430</td>
+                        <td class="numeric">1.08470</td>
+                        <td class="numeric">1.08410</td>
+                        <td class="numeric">1.08450</td>
+                        <td class="numeric" style="color: #5a67d8; font-weight: 600;">1.08360</td>
+                        <td class="numeric" style="color: #28a745; font-weight: 600;">+0.0830%</td>
+                        <td class="numeric" style="color: #5a67d8; font-weight: 600;">1.08470</td>
+                        <td class="numeric">1.08550</td>
+                        <td class="numeric">1.08410</td>
+                        <td class="numeric">1.08540</td>
+                        <td class="numeric">0.00140</td>
+                        <td class="numeric">0.00060</td>
+                        <td class="trend-neutral">→ NEUTRO</td>
+                        <td class="numeric">0.00020</td>
+                        <td class="numeric">0.00040</td>
+                        <td class="numeric">0.00020</td>
+                        <td class="text-center"><span class="signal-none">⚪ —</span></td>
+                        <td class="numeric">—</td>
+                    </tr>
+                    
+                    <tr>
+                        <td class="text-center fw-bold">5</td>
+                        <td>2026-05-05 09:04</td>
+                        <td class="numeric">1.08450</td>
+                        <td class="numeric">1.08480</td>
+                        <td class="numeric">1.08440</td>
+                        <td class="numeric">1.08465</td>
+                        <td class="numeric" style="color: #5a67d8; font-weight: 600;">1.08365</td>
+                        <td class="numeric" style="color: #28a745; font-weight: 600;">+0.0923%</td>
+                        <td class="numeric" style="color: #5a67d8; font-weight: 600;">1.08480</td>
+                        <td class="numeric">1.08550</td>
+                        <td class="numeric">1.08410</td>
+                        <td class="numeric">1.08470</td>
+                        <td class="numeric">0.00140</td>
+                        <td class="numeric">0.00070</td>
+                        <td class="trend-up">↗ ALZA</td>
+                        <td class="numeric">0.00015</td>
+                        <td class="numeric">0.00030</td>
+                        <td class="numeric">0.00018</td>
+                        <td class="text-center"><span class="signal-none">⚪ —</span></td>
+                        <td class="numeric">—</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div style="color: #6c757d; font-size: 14px;">
+                Mostrando <strong>5</strong> de <strong>1440</strong> registros (Página <strong>1</strong> de <strong>29</strong>)
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-sm btn-outline-primary">Primera</button>
+                <button class="btn btn-sm btn-outline-primary" disabled>Anterior</button>
+                <button class="btn btn-sm btn-outline-primary">Siguiente</button>
+                <button class="btn btn-sm btn-outline-primary">Última</button>
+            </div>
+        </div>
+        
+        <!-- Leyenda -->
+        <div class="legend mt-4">
+            <h5 style="margin-bottom: 15px; font-weight: 600;">📖 Leyenda de Columnas</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="legend-item">
+                        <span class="legend-label">PMP<sub>n</sub>:</span> 
+                        Promedio móvil ponderado del máximo o mínimo (usa el período WAM: 20 o 50)
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-label">RP<sup>+</sup> / RP<sup>-</sup>:</span> 
+                        Rango primario (|PMPn - min/max(P)|)
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-label">Dif<sub>n</sub>:</span> 
+                        Separación entre PMPn y precio actual
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="legend-item">
+                        <span class="legend-label">σDif<sub>n</sub>:</span> 
+                        Desviación estándar de las separaciones
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-label">IMP<sub>i</sub>:</span> 
+                        Importe de acumulación = mp × (1-fd)<sup>i-1</sup>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-label">Señal:</span> 
+                        Se genera cuando se cumplen las 4 condiciones
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Condiciones para señales -->
+        <div class="mt-4 p-3" style="background: #e7f3ff; border-radius: 8px; border-left: 4px solid #2196F3;">
+            <h5 style="color: #0d47a1; margin-bottom: 15px; font-weight: 600;">
+                ✅ Condiciones para Emisión de Señales
+            </h5>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 style="color: #28a745; font-weight: 600;">🟢 COMPRA (cuando se cumplan las 4):</h6>
+                    <ol style="margin-left: 20px; line-height: 1.8;">
+                        <li>Existe tendencia al alza (RP<sup>+</sup> ≥ pt)</li>
+                        <li>PMP<sub>n</sub> = max(P)</li>
+                        <li>PMP<sub>n</sub> ≠ PMP<sub>n-1</sub></li>
+                        <li>Dif<sub>n</sub> ≤ Prom Dif<sub>n-1</sub> ± 2σDif<sub>n-1</sub></li>
+                    </ol>
+                </div>
+                <div class="col-md-6">
+                    <h6 style="color: #dc3545; font-weight: 600;">🔴 VENTA (cuando se cumplan las 4):</h6>
+                    <ol style="margin-left: 20px; line-height: 1.8;">
+                        <li>Existe tendencia a la baja (RP<sup>-</sup> ≥ pt)</li>
+                        <li>PMP<sub>n</sub> = min(P)</li>
+                        <li>PMP<sub>n</sub> ≠ PMP<sub>n-1</sub></li>
+                        <li>Dif<sub>n</sub> ≤ Prom Dif<sub>n-1</sub> ± 2σDif<sub>n-1</sub></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nota final -->
+        <div class="alert alert-info mt-4" role="alert">
+            <strong>💡 Nota:</strong> Este es un preview visual de cómo quedaría el sistema. 
+            Las filas resaltadas en verde/rojo indican señales de compra/venta. 
+            El algoritmo se calculará en tiempo real en el backend (API) y los resultados 
+            se mostrarán dinámicamente en la tabla y el gráfico.
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Simular la actualización del Período PMPn cuando cambia el Período WAM
+        document.addEventListener('DOMContentLoaded', function() {
+            const wamPeriodSelect = document.querySelector('.col-md-2:nth-child(3) select');
+            const pmpnDisplay = document.querySelector('.algo-params .col-md-3 .form-control');
+            
+            if (wamPeriodSelect && pmpnDisplay) {
+                wamPeriodSelect.addEventListener('change', function() {
+                    const selectedPeriod = this.value;
+                    pmpnDisplay.innerHTML = `${selectedPeriod} <small style="font-weight: normal;">(tomado de Período WAM)</small>`;
+                    console.log(`Período PMPn actualizado a: ${selectedPeriod}`);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
