@@ -40,6 +40,7 @@ private readonly ILogger<OperativeAlgorithmSvc> _logger;
         double? previousPMPn = null;
         List<double> difnHistory = new List<double>();
         int operationCounter = 0;
+        string previousTendencia = "NEUTRO";
         
         for (int i = 0; i < rates.Count; i++)
         {
@@ -66,8 +67,9 @@ private readonly ILogger<OperativeAlgorithmSvc> _logger;
             if (pmpn <= minP) minP = pmpn;
             
             // 4. Calcular Rangos Primarios (como porcentaje del precio)
-            double rpPlus = pmpn > 0 ? (Math.Abs(pmpn - minP) / pmpn) * 100 : 0;
-            double rpMinus = pmpn > 0 ? (Math.Abs(maxP - pmpn) / pmpn) * 100 : 0;
+            // double rpPlus = pmpn > 0 ? (Math.Abs(pmpn - minP) / pmpn) * 100 : 0;
+            // double rpMinus = pmpn > 0 ? (Math.Abs(maxP - pmpn) / pmpn) * 100 : 0;
+            var (rpPlus, rpMinus) = CalculateRangos(pmpn, maxP, minP);
             
             // Log detallado
             if (i < 5)
@@ -77,7 +79,8 @@ private readonly ILogger<OperativeAlgorithmSvc> _logger;
             
             // 5. Detectar tendencia y rompimientos
             string tendencia = DetectarTendencia(rpPlus, rpMinus, parameters.Pt, parameters.Pr, 
-                                                  ref maxP, ref minP, pmpn, ref operationCounter);
+                                                  ref maxP, ref minP, pmpn, ref operationCounter,
+                                                  previousTendencia);
             
             // 6. Calcular separación (Difn)
             double difn = Math.Abs(pmpn - rate.CLOSE);
@@ -121,6 +124,7 @@ private readonly ILogger<OperativeAlgorithmSvc> _logger;
             
             // Actualizar para siguiente iteración
             previousPMPn = pmpn;
+            previousTendencia = tendencia;
         }
         
         _logger.LogInformation($"Algoritmo BATCH completado. Señales generadas: " +
@@ -171,8 +175,9 @@ private readonly ILogger<OperativeAlgorithmSvc> _logger;
             if (pmpn <= state.MinP) state.MinP = pmpn;
             
             // Calcular rangos primarios
-            double rpPlus = Math.Abs(pmpn - state.MinP);
-            double rpMinus = Math.Abs(state.MaxP - pmpn);
+            // double rpPlus = Math.Abs(pmpn - state.MinP);
+            // double rpMinus = Math.Abs(state.MaxP - pmpn);
+            var (rpPlus, rpMinus) = CalculateRangos(pmpn, state.MaxP, state.MinP);
             
             // Detectar tendencia
             double maxP = state.MaxP;
@@ -180,24 +185,27 @@ private readonly ILogger<OperativeAlgorithmSvc> _logger;
             int operationCounter = state.OperationCounter;
             string tendencia = DetectarTendencia(rpPlus, rpMinus, parameters.Pt, parameters.Pr,
                                                   ref maxP, ref minP, pmpn, 
-                                                  ref operationCounter);
+                                                  ref operationCounter,
+                                                  state.CurrentTrend);
             state.MaxP = maxP;
             state.MinP = minP;
             state.OperationCounter = operationCounter;
             
             // Calcular Difn
             double difn = Math.Abs(pmpn - newRate.CLOSE);
-            state.DifnHistory.Add(difn);
             
-            // Estadísticas
+            // Estadísticas con datos i-1 (anteriores al actual, como indica el documento)
+            // Prom Difn_{i-1} y σDifn_{i-1} se calculan ANTES de agregar Difn_i
             double? promDifn = null;
             double? sigmaDifn = null;
             
-            if (state.DifnHistory.Count > 1)
+            if (state.DifnHistory.Count > 0)
             {
                 promDifn = state.DifnHistory.Average();
                 sigmaDifn = CalculateStandardDeviation(state.DifnHistory);
             }
+            
+            state.DifnHistory.Add(difn);
             
             // Evaluar señal
             var signal = EvaluarSenal(tendencia, pmpn, state.MaxP, state.MinP, 
@@ -355,11 +363,13 @@ private readonly ILogger<OperativeAlgorithmSvc> _logger;
     }
     
     /// <summary>
-    /// Detecta tendencia y gestiona rompimientos
+    /// Detecta tendencia y gestiona rompimientos.
+    /// El rompimiento solo se dispara cuando hay una tendencia previa opuesta establecida,
+    /// evitando resets en cascada tick a tick.
     /// </summary>
     private string DetectarTendencia(double rpPlus, double rpMinus, double pt, double pr,
                                      ref double maxP, ref double minP, double pmpn,
-                                     ref int operationCounter)
+                                     ref int operationCounter, string previousTendencia)
     {
         string tendencia = "NEUTRO";
         
@@ -375,22 +385,31 @@ private readonly ILogger<OperativeAlgorithmSvc> _logger;
         }
         
         // Detectar rompimiento de tendencia
-        if (rpMinus > 0 && rpPlus / rpMinus >= pr)
+        // Solo se dispara cuando había una tendencia opuesta previa establecida
+        // (evita cascade reset: RP-/RP+ siempre ≥ pr mientras el precio sube hacia maxP)
+        if (previousTendencia == "ALZA" && rpMinus > 0 && rpPlus / rpMinus >= pr)
         {
-            // Rompimiento a la baja
+            // Rompimiento a la baja: venía subiendo, ahora RP+ domina sobre RP-
             maxP = pmpn;
-            operationCounter = 0; // Resetear contador
+            operationCounter = 0;
         }
-        else if (rpPlus > 0 && rpMinus / rpPlus >= pr)
+        else if (previousTendencia == "BAJA" && rpPlus > 0 && rpMinus / rpPlus >= pr)
         {
-            // Rompimiento al alza
+            // Rompimiento al alza: venía bajando, ahora RP- domina sobre RP+
             minP = pmpn;
-            operationCounter = 0; // Resetear contador
+            operationCounter = 0;
         }
         
         return tendencia;
     }
     
+    private (double rpPlus, double rpMinus) CalculateRangos(double pmpn, double maxP, double minP)
+    {
+        double rpPlus  = pmpn > 0 ? (Math.Abs(pmpn - minP)  / pmpn) * 100 : 0;
+        double rpMinus = pmpn > 0 ? (Math.Abs(maxP - pmpn) / pmpn) * 100 : 0;
+        return (rpPlus, rpMinus);
+    }
+
     /// <summary>
     /// Evalúa las 4 condiciones para generar señal
     /// </summary>

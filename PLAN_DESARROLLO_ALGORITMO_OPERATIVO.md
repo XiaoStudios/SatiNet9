@@ -2448,3 +2448,79 @@ Estado final:                           Código limpio, escalable, mantenible
 ---
 
 **¿Apruebas este plan? ¿Algún ajuste o comentario antes de comenzar la implementación?**
+
+---
+
+## 🆕 ACTUALIZACIÓN: PANEL DE ADMINISTRACIÓN API + CONTROL DE SÍMBOLOS POR USUARIO
+
+**Fecha de actualización:** 29 de Julio, 2026  
+**Objetivo:** Incorporar una capa de administración para MetaTrader/API y gestión de acceso de usuarios al frontend Trader.
+
+### 8.1 Nuevo Proyecto Web de Administración
+
+- [x] Crear nuevo proyecto ASP.NET Core MVC: `Sati-Net-Last.Admin`
+- [x] Agregar referencia del proyecto en la solución `Sati-Net-Last.sln`
+- [x] Alinear configuración base con `Sati-Net-Last.Web` (Razor runtime compilation + HttpClient BackendAPI)
+
+**Resultado esperado:** Frontend dedicado para tareas de administración sin mezclar responsabilidades con la vista Trader.
+
+### 8.2 Módulo 1 - Administrador de MTAPI
+
+**Alcance funcional:**
+- Configurar IP/host y puerto de conexión a MTAPI
+- Gestionar credenciales de MTAPI (usuario y contraseña)
+- Iniciar conexión de MTAPI
+- Detener/desconectar MTAPI
+- Visualizar estado de conexión (Conectado, Desconectado, Error)
+- Registrar bitácora básica de eventos de conexión
+
+**Entregables técnicos sugeridos:**
+- `MTApiSettings` en configuración persistente (DB o archivo seguro)
+- Endpoints de administración (obtener/guardar configuración, connect/disconnect, health/status)
+- Vista de administración con formularios y acciones de control
+
+### 8.3 Módulo 2 - Administrador de Usuarios
+
+**Alcance funcional:**
+- Crear usuarios con acceso a `Sati-Net-Last.Web`
+- Habilitar/Deshabilitar usuarios
+- Asignar símbolos permitidos por usuario (ejemplo: EURUSD, GBPUSD, XAUUSD)
+- Editar asignaciones de símbolos por usuario
+
+**Entregables técnicos sugeridos:**
+- Tabla de usuarios de acceso web
+- Tabla relacional usuario-símbolo
+- Endpoints CRUD de usuarios y asignaciones
+- Vista para gestión de usuarios y permisos de símbolos
+
+### 8.4 Cambio Obligatorio en Sati-Net-Last.Web (Consumo de Símbolos)
+
+**Regla nueva:**
+Cuando el usuario inicie sesión en `Sati-Net-Last.Web`, solo debe ver y operar con los símbolos asignados desde el panel de administración.
+
+**No permitido a partir de esta actualización:**
+- Cargar todos los símbolos disponibles directamente desde MTAPI para cualquier usuario.
+
+**Implementación propuesta:**
+- En login, obtener perfil del usuario y sus símbolos permitidos
+- Reemplazar endpoint/listado global de símbolos por endpoint filtrado por usuario autenticado
+- Validar en backend que un usuario no pueda consultar símbolos no asignados
+- Aplicar validación tanto en vistas como en endpoints REST
+
+### 8.5 Plan de Ejecución (Nuevo Bloque)
+
+1. Diseñar modelo de datos para configuración MTAPI y permisos de símbolos por usuario.
+2. Crear endpoints backend de administración (MTAPI + usuarios + asignaciones).
+3. Implementar autenticación/autorización para panel Admin.
+4. Construir vistas del panel Admin (Login, MTAPI Admin, Usuarios Admin).
+5. Integrar filtro de símbolos por usuario en `Sati-Net-Last.Web`.
+6. Validar seguridad: bloqueo de acceso a símbolos no autorizados.
+7. Realizar pruebas de integración entre Admin, API y Web.
+
+### 8.6 Criterios de Aceptación
+
+- El proyecto `Sati-Net-Last.Admin` compila y ejecuta desde la solución.
+- El administrador puede configurar conexión MTAPI y controlar connect/disconnect.
+- El administrador puede crear, habilitar/deshabilitar usuarios y asignar símbolos.
+- Un usuario de `Sati-Net-Last.Web` solo visualiza símbolos asignados.
+- El backend rechaza consultas de símbolos no autorizados para el usuario.

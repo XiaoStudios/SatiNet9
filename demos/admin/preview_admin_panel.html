@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Preview - Sati Net Last Admin</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg: #f5f5f5;
+      --ink: #2d3748;
+      --muted: #718096;
+      --card: #ffffff;
+      --line: #e2e8f0;
+      --nav: #181a20;
+      --primary: #5a67d8;
+      --primary-hover: #4c51bf;
+      --success: #48bb78;
+      --success-hover: #38a169;
+      --danger: #e53e3e;
+      --warning-bg: #fff3cd;
+      --warning-text: #856404;
+      --info-bg: #e7f3ff;
+      --info-text: #0d47a1;
+      --radius: 10px;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.5;
+    }
+
+    .navbar {
+      background: var(--nav);
+      color: #d1d4dc;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      color: #26a69a;
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 14px;
+      color: #d1d4dc;
+      font-size: 0.9rem;
+      flex-wrap: wrap;
+    }
+
+    .nav-links span {
+      background: rgba(38, 166, 154, 0.12);
+      border: 1px solid rgba(38, 166, 154, 0.25);
+      border-radius: 999px;
+      padding: 4px 10px;
+    }
+
+    .wrap {
+      max-width: 1440px;
+      margin: 16px auto 22px;
+      padding: 0 16px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .sati-page {
+      background: var(--card);
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      padding: 22px;
+    }
+
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      color: #181a20;
+    }
+
+    .subtitle {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.93rem;
+    }
+
+    .status {
+      border-radius: 999px;
+      border: 1px solid #b5d6c9;
+      background: #e8f5ef;
+      color: #1e7a4b;
+      font-weight: 700;
+      font-size: 0.78rem;
+      padding: 6px 10px;
+      white-space: nowrap;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 16px;
+    }
+
+    .panel {
+      background: #f8f9fa;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .panel h3 {
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #495057;
+      margin-bottom: 4px;
+    }
+
+    .input,
+    .textarea,
+    .btn {
+      width: 100%;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+
+    .input,
+    .textarea {
+      border: 2px solid #dee2e6;
+      padding: 8px 10px;
+      background: #fff;
+      color: #2d3748;
+    }
+
+    .textarea {
+      min-height: 100px;
+      resize: vertical;
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: 0.82rem;
+    }
+
+    .btn {
+      border: none;
+      cursor: pointer;
+      padding: 10px 12px;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-primary:hover { background: var(--primary-hover); }
+
+    .btn-success {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .btn-success:hover { background: var(--success-hover); }
+
+    .btn-outline {
+      background: #fff;
+      border: 1px solid #cbd5e0;
+      color: #2d3748;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .tab {
+      background: #edf2f7;
+      border: 1px solid #d2dbe7;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.86rem;
+      font-weight: 600;
+    }
+
+    .tab.active {
+      background: #5a67d8;
+      color: #fff;
+      border-color: #5a67d8;
+    }
+
+    .warning {
+      background: var(--warning-bg);
+      color: var(--warning-text);
+      border-left: 4px solid #ffc107;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 0.86rem;
+    }
+
+    .info {
+      background: var(--info-bg);
+      color: var(--info-text);
+      border-left: 4px solid #2196f3;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 0.86rem;
+    }
+
+    .top-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .row {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-bottom: 10px;
+    }
+
+    .row.two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .box {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .tool-row {
+      display: flex;
+      gap: 8px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid #d9e2ec;
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 0.88rem;
+      background: #fff;
+    }
+
+    thead {
+      background: #5a67d8;
+      color: #fff;
+    }
+
+    th, td {
+      padding: 9px 10px;
+      text-align: left;
+      border-bottom: 1px solid #edf2f7;
+      vertical-align: top;
+    }
+
+    .badge {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .ok { background: #c6f6d5; color: #22543d; }
+    .off { background: #fed7d7; color: #822727; }
+
+    .symbol-list {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .sym {
+      background: #ebf4ff;
+      border: 1px solid #bee3f8;
+      color: #2c5282;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      padding: 2px 8px;
+    }
+
+    footer {
+      background: #181a20;
+      color: #d1d4dc;
+      text-align: center;
+      padding: 12px;
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      .row,
+      .row.two { grid-template-columns: 1fr; }
+      .top-actions { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="brand">Sati Net Last | Admin</div>
+    <div class="nav-links">
+      <span>Login</span>
+      <span>MTAPI Admin</span>
+      <span>Usuarios Admin</span>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="sati-page">
+      <div class="title-row">
+        <div>
+          <h1>Panel de Administracion API</h1>
+          <div class="subtitle">Preview de interfaz similar a Sati-Net-Last.Web</div>
+        </div>
+        <span class="status">ONLINE | Admin autenticado</span>
+      </div>
+
+      <div class="layout">
+        <aside class="panel">
+          <h3>Login Administrador</h3>
+          <div class="form-grid">
+            <div>
+              <label class="label">Correo</label>
+              <input class="input" value="admin@sati.local" />
+            </div>
+            <div>
+              <label class="label">Password</label>
+              <input class="input" type="password" value="********" />
+            </div>
+            <button class="btn btn-primary">Iniciar sesion</button>
+            <button class="btn btn-outline">Cerrar sesion</button>
+          </div>
+          <div style="height:10px"></div>
+          <div class="info">
+            Solo perfil Administrador puede editar parametros de MTAPI y asignar simbolos por usuario.
+          </div>
+        </aside>
+
+        <section class="panel">
+          <div class="tabs">
+            <div class="tab active">1) Administrador de MTAPI</div>
+            <div class="tab">2) Administrador de usuarios</div>
+          </div>
+
+          <h3 style="margin-bottom:10px;">Administrador de MTAPI</h3>
+
+          <div class="row">
+            <div class="box">
+              <label class="label">IP o Host</label>
+              <input class="input" value="192.168.0.29" />
+            </div>
+            <div class="box">
+              <label class="label">Puerto</label>
+              <input class="input" value="5001" />
+            </div>
+            <div class="box">
+              <label class="label">Timeout (seg)</label>
+              <input class="input" value="30" />
+            </div>
+          </div>
+
+          <div class="row two">
+            <div class="box">
+              <label class="label">Usuario MTAPI</label>
+              <input class="input" value="mtapi_user" />
+            </div>
+            <div class="box">
+              <label class="label">Password MTAPI</label>
+              <input class="input" type="password" value="********" />
+            </div>
+          </div>
+
+          <div class="tool-row">
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn btn-primary">Guardar configuracion</button>
+              <button class="btn btn-outline">Probar conexion</button>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn btn-success">Conectar MTAPI</button>
+              <button class="btn btn-outline">Desconectar</button>
+            </div>
+          </div>
+
+          <div class="box" style="margin-bottom:10px;">
+            <label class="label">Log de conexion</label>
+            <textarea class="textarea">[10:42:11] Inicio de conexion solicitado
+[10:42:12] Handshake OK
+[10:42:12] Estado: CONNECTED
+[10:44:57] Ping 42ms</textarea>
+          </div>
+
+          <h3 style="margin:8px 0 10px;">Administrador de usuarios</h3>
+
+          <div class="row two">
+            <div class="box">
+              <label class="label">Nuevo usuario</label>
+              <input class="input" value="trader01@sati.local" />
+            </div>
+            <div class="box">
+              <label class="label">Simbolos asignados</label>
+              <input class="input" value="EURUSD, GBPUSD, XAUUSD" />
+            </div>
+          </div>
+
+          <div class="top-actions">
+            <button class="btn btn-primary">Crear usuario</button>
+            <button class="btn btn-outline">Actualizar asignaciones</button>
+          </div>
+
+          <div style="height:10px"></div>
+          <div class="warning">
+            Regla: en Sati-Net-Last.Web cada usuario solo vera simbolos asignados desde este panel.
+          </div>
+
+          <div style="height:10px"></div>
+          <table>
+            <thead>
+              <tr>
+                <th>Usuario</th>
+                <th>Estado</th>
+                <th>Simbolos asignados</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>trader01@sati.local</td>
+                <td><span class="badge ok">HABILITADO</span></td>
+                <td>
+                  <div class="symbol-list">
+                    <span class="sym">EURUSD</span>
+                    <span class="sym">GBPUSD</span>
+                    <span class="sym">XAUUSD</span>
+                  </div>
+                </td>
+                <td>Editar | Deshabilitar</td>
+              </tr>
+              <tr>
+                <td>trader02@sati.local</td>
+                <td><span class="badge off">DESHABILITADO</span></td>
+                <td>
+                  <div class="symbol-list">
+                    <span class="sym">USDJPY</span>
+                    <span class="sym">USDCAD</span>
+                  </div>
+                </td>
+                <td>Editar | Habilitar</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Preview UI estatico para validacion de flujo de administracion
+  </footer>
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sati Net Last Admin - Login Preview</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg: #f5f5f5;
+      --nav: #181a20;
+      --primary: #5a67d8;
+      --primary-hover: #4c51bf;
+      --ink: #2d3748;
+      --muted: #718096;
+      --line: #e2e8f0;
+      --card: #ffffff;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .navbar {
+      background: var(--nav);
+      color: #d1d4dc;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      color: #26a69a;
+      font-weight: 700;
+    }
+
+    .wrap {
+      flex: 1;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+    }
+
+    .card {
+      width: min(430px, 100%);
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.08);
+      padding: 20px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      color: #181a20;
+      font-size: 1.35rem;
+    }
+
+    .subtitle {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .field { margin-bottom: 12px; }
+
+    .label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: #4a5568;
+    }
+
+    .input {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #dee2e6;
+      border-radius: 6px;
+      font-size: 0.92rem;
+    }
+
+    .actions {
+      margin-top: 14px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-primary:hover { background: var(--primary-hover); }
+
+    .btn-ghost {
+      background: #fff;
+      border: 1px solid #cbd5e0;
+      color: #2d3748;
+    }
+
+    .note {
+      margin-top: 12px;
+      padding: 10px 12px;
+      background: #e7f3ff;
+      border-left: 4px solid #2196f3;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      color: #0d47a1;
+    }
+
+    .error {
+      margin-top: 8px;
+      color: #c53030;
+      font-size: 0.84rem;
+      min-height: 18px;
+    }
+
+    footer {
+      background: #181a20;
+      color: #d1d4dc;
+      text-align: center;
+      padding: 10px;
+      font-size: 0.84rem;
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="brand">Sati Net Last | Admin</div>
+    <div>Preview funcional - Login</div>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <h1>Acceso Administrador</h1>
+      <p class="subtitle">Inicia sesion para entrar al panel de administracion API</p>
+
+      <form id="loginForm">
+        <div class="field">
+          <label class="label" for="email">Correo</label>
+          <input class="input" id="email" name="email" type="email" value="admin@sati.local" required />
+        </div>
+
+        <div class="field">
+          <label class="label" for="password">Password</label>
+          <input class="input" id="password" name="password" type="password" value="123456" required />
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" type="submit">Iniciar sesion</button>
+          <button class="btn btn-ghost" type="button" id="demoFill">Cargar demo</button>
+        </div>
+
+        <div class="error" id="errorBox"></div>
+      </form>
+
+      <div class="note">
+        Credenciales demo: admin@sati.local / 123456
+      </div>
+    </section>
+  </main>
+
+  <footer>Preview UI estatico para validacion de flujo</footer>
+
+  <script>
+    const form = document.getElementById("loginForm");
+    const demoFillBtn = document.getElementById("demoFill");
+
+    demoFillBtn.addEventListener("click", function () {
+      document.getElementById("email").value = "admin@sati.local";
+      document.getElementById("password").value = "123456";
+    });
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      window.location.href = "preview_admin_index.html";
+    });
+  </script>
+</body>
+</html>

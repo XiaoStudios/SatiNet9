@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MTsocketAPI5", "MT5socketAP
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sati-Models", "Sati-Models\Sati-Models.csproj", "{D922E2D8-56F1-4B8C-9EFE-BDB008003196}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sati-Net-Last.Admin", "Sati-Net-Last.Admin\Sati-Net-Last.Admin.csproj", "{4E23958A-9E84-4CD8-B789-4D5343144223}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +73,18 @@ Global
 		{D922E2D8-56F1-4B8C-9EFE-BDB008003196}.Release|x64.Build.0 = Release|Any CPU
 		{D922E2D8-56F1-4B8C-9EFE-BDB008003196}.Release|x86.ActiveCfg = Release|Any CPU
 		{D922E2D8-56F1-4B8C-9EFE-BDB008003196}.Release|x86.Build.0 = Release|Any CPU
+		{4E23958A-9E84-4CD8-B789-4D5343144223}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E23958A-9E84-4CD8-B789-4D5343144223}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E23958A-9E84-4CD8-B789-4D5343144223}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4E23958A-9E84-4CD8-B789-4D5343144223}.Debug|x64.Build.0 = Debug|Any CPU
+		{4E23958A-9E84-4CD8-B789-4D5343144223}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4E23958A-9E84-4CD8-B789-4D5343144223}.Debug|x86.Build.0 = Debug|Any CPU
+		{4E23958A-9E84-4CD8-B789-4D5343144223}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E23958A-9E84-4CD8-B789-4D5343144223}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4E23958A-9E84-4CD8-B789-4D5343144223}.Release|x64.ActiveCfg = Release|Any CPU
+		{4E23958A-9E84-4CD8-B789-4D5343144223}.Release|x64.Build.0 = Release|Any CPU
+		{4E23958A-9E84-4CD8-B789-4D5343144223}.Release|x86.ActiveCfg = Release|Any CPU
+		{4E23958A-9E84-4CD8-B789-4D5343144223}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
