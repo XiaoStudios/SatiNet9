@@ -1,6 +1,6 @@
 using System.Collections;
 using System.Threading.Tasks;
-using Sati_Models.DTOs;
+using Sati_Models.DBModels;
 using Microsoft.AspNetCore.SignalR;
 using MTsocketAPI.MT5;
 using Sati_Net_Last.API.Hubs;
@@ -222,7 +222,7 @@ public class MTRepo : IMTRepo
                             }
                         }
 
-                        await _satiDevContext.Rates.AddAsync(new RateDto // ✅ AddAsync
+                        await _satiDevContext.Rates.AddAsync(new Rate // ✅ AddAsync
                         {
                             Time = rate.TIME,
                             Open = rate.OPEN,
@@ -233,7 +233,7 @@ public class MTRepo : IMTRepo
                             Spread = rate.SPREAD,
                             RealVolume = rate.REAL_VOLUME,
                             SymbolStr = symbolStr,
-                            Time_MT_Api = rate.TIME_MTAPI,
+                            TimeMtApi = rate.TIME_MTAPI,
                             Fecha = fecha,
                             Hora = hora
                         });

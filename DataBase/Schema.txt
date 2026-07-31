@@ -1,9 +1,23 @@
 /***********/
-Historico de cambios de moneda
+-- Esquema unificado SATI
+-- Historico MTAPI + Administracion + Usuarios + Puestos de Trabajo
 /***********/
 
-use sati_dev;
-drop table Rates;
+USE sati_dev;
+
+/***********/
+-- Limpieza inicial (respetar orden por FKs)
+-- FASE 2 (Gerardo - Panel Admin): Work_Slots, Shift_Change_Requests
+/***********/
+DROP TABLE IF EXISTS User_Symbols;
+DROP TABLE IF EXISTS Mtapi_Connection_Log;
+DROP TABLE IF EXISTS Admin_Users;
+DROP TABLE IF EXISTS Mtapi_Settings;
+DROP TABLE IF EXISTS Rates;
+
+/***********/
+-- 1) Historico MTAPI (tabla existente consolidada + indices)
+/***********/
 CREATE TABLE Rates (
     Id INT AUTO_INCREMENT PRIMARY KEY,
     SymbolStr VARCHAR(16) NOT NULL,
@@ -15,10 +29,95 @@ CREATE TABLE Rates (
     TICK_VOLUME INT NOT NULL,
     SPREAD INT NOT NULL,
     REAL_VOLUME INT NOT NULL,
-    Time_MT_Api VARCHAR(20) NOT NULL
-);
-ALTER TABLE rates ADD COLUMN FECHA VARCHAR(20);
-ALTER TABLE rates ADD COLUMN HORA VARCHAR(10);
+    Time_MT_Api VARCHAR(20) NOT NULL,
+    FECHA VARCHAR(20) NULL,
+    HORA VARCHAR(10) NULL,
 
+    INDEX idx_rates_symbol_time (SymbolStr, TIME),
+    INDEX idx_rates_fecha_hora (FECHA, HORA)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 /***********/
+-- 2) Configuracion MTAPI (panel admin)
+/***********/
+CREATE TABLE Mtapi_Settings (
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    Host VARCHAR(100) NOT NULL,
+    Port INT NOT NULL,
+    MtUser VARCHAR(100) NOT NULL,
+    MtPassword VARCHAR(255) NOT NULL,
+    IsActive TINYINT(1) NOT NULL DEFAULT 1,
+    LastConnectionStatus VARCHAR(20) NULL,  -- CONNECTED / DISCONNECTED / ERROR
+    LastConnectionAt DATETIME NULL,
+    CreatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+/***********/
+-- 3) Bitacora de eventos de conexion MTAPI
+/***********/
+CREATE TABLE Mtapi_Connection_Log (
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    SettingsId INT NULL,
+    EventType VARCHAR(30) NOT NULL,  -- CONNECT / DISCONNECT / ERROR / HEARTBEAT
+    Message VARCHAR(500) NULL,
+    Status VARCHAR(20) NULL,          -- SUCCESS / FAIL / INFO
+    CreatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_mtapi_log_settings
+        FOREIGN KEY (SettingsId) REFERENCES mtapi_settings(Id)
+        ON DELETE SET NULL ON UPDATE CASCADE,
+
+    INDEX idx_mtapi_log_created (CreatedAt)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+/***********/
+-- 4) Usuarios del sistema (admin y traders)
+/***********/
+CREATE TABLE Admin_Users (
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    Username VARCHAR(100) NOT NULL,
+    Email VARCHAR(150) NOT NULL,
+    PasswordHash VARCHAR(255) NOT NULL,
+    FullName VARCHAR(150) NULL,
+    IsEnabled TINYINT(1) NOT NULL DEFAULT 1,
+    IsAdmin TINYINT(1) NOT NULL DEFAULT 0,
+    LastLoginAt DATETIME NULL,
+    CreatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    UNIQUE KEY uq_admin_users_username (Username),
+    UNIQUE KEY uq_admin_users_email (Email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+/***********/
+-- 5) Divisas/Simbolos asignadas por usuario
+--    Un usuario puede tener varias divisas.
+--    Una divisa solo puede pertenecer a un usuario (UNIQUE en SymbolStr).
+/***********/
+CREATE TABLE User_Symbols (
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    UserId INT NOT NULL,
+    SymbolStr VARCHAR(16) NOT NULL,
+    IsActive TINYINT(1) NOT NULL DEFAULT 1,
+    AssignedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE KEY uq_user_symbols_symbol (SymbolStr),  -- 1 divisa = 1 usuario
+
+    CONSTRAINT fk_user_symbols_user
+        FOREIGN KEY (UserId) REFERENCES Admin_Users(Id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+
+    INDEX idx_user_symbols_user (UserId)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+/***********/
+-- FASE 2 - Cuentas de Trabajo / Turnos (Gerardo - Panel Admin)
+-- Work_Slots y Shift_Change_Requests se crean en fase 2
+/***********/
+
+/***********/
+-- Datos de prueba: usuario test para validar login Web
+/***********/
+INSERT INTO Admin_Users (Username, Email, PasswordHash, FullName, IsEnabled, IsAdmin)
+VALUES ('ivan', 'ivan@sati.dev', SHA2('Test2026!', 256), 'Ivan (Test Web)', 1, 0);
