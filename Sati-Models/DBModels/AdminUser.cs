@@ -15,8 +15,6 @@ public partial class AdminUser
 
     public string? FullName { get; set; }
 
-    public string? Symbol { get; set; }
-
     public bool? IsEnabled { get; set; }
 
     public bool IsAdmin { get; set; }
@@ -26,4 +24,6 @@ public partial class AdminUser
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
+
+    public virtual ICollection<UserSymbol> UserSymbols { get; set; } = new List<UserSymbol>();
 }

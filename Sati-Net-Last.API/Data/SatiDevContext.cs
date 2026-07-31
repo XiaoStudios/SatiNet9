@@ -56,7 +56,6 @@ public partial class SatiDevContext : DbContext
                 .HasDefaultValueSql("'1'");
             entity.Property(e => e.LastLoginAt).HasColumnType("datetime");
             entity.Property(e => e.PasswordHash).HasMaxLength(255);
-            entity.Property(e => e.Symbol).HasMaxLength(16);
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -140,6 +139,29 @@ public partial class SatiDevContext : DbContext
             entity.Property(e => e.TimeMtApi)
                 .HasMaxLength(20)
                 .HasColumnName("Time_MT_Api");
+        });
+
+        modelBuilder.Entity<UserSymbol>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("user_symbols");
+
+            entity.HasIndex(e => e.UserId, "idx_user_symbols_user");
+
+            entity.HasIndex(e => e.SymbolStr, "uq_user_symbols_symbol").IsUnique();
+
+            entity.Property(e => e.AssignedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("datetime");
+            entity.Property(e => e.IsActive)
+                .IsRequired()
+                .HasDefaultValueSql("'1'");
+            entity.Property(e => e.SymbolStr).HasMaxLength(16);
+
+            entity.HasOne(d => d.User).WithMany(p => p.UserSymbols)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("fk_user_symbols_user");
         });
 
         OnModelCreatingPartial(modelBuilder);
