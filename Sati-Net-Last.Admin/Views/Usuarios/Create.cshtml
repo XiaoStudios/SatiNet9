@@ -1,0 +1,58 @@
+@model UsuarioBroker
+
+@{
+    ViewData["Title"] = "Nuevo Cliente";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <h1 class="mb-4">Registrar Nuevo Cliente</h1>
+
+            <form method="post" asp-action="Create" asp-controller="Usuarios">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <!-- Nombre Completo -->
+                <div class="mb-3">
+                    <label asp-for="NombreCompleto" class="form-label">Nombre Completo</label>
+                    <input asp-for="NombreCompleto" class="form-control" placeholder="Ej. Juan Pérez" />
+                    <span asp-validation-for="NombreCompleto" class="text-danger"></span>
+                </div>
+
+                <!-- Correo -->
+                <div class="mb-3">
+                    <label asp-for="Correo" class="form-label">Correo Electrónico</label>
+                    <input asp-for="Correo" type="email" class="form-control" placeholder="Ej. juan@example.com" />
+                    <span asp-validation-for="Correo" class="text-danger"></span>
+                </div>
+
+                <!-- Par de Moneda -->
+                <div class="mb-3">
+                    <label asp-for="ParMoneda" class="form-label">Par de Moneda</label>
+                    <select asp-for="ParMoneda" class="form-select" asp-items="@(new SelectList(ViewBag.ParesMonedas))">
+                        <option value="">-- Selecciona un par de moneda --</option>
+                    </select>
+                    <span asp-validation-for="ParMoneda" class="text-danger"></span>
+                </div>
+
+                <!-- Estado Activo -->
+                <div class="mb-3 form-check">
+                    <input asp-for="Activo" type="checkbox" class="form-check-input" id="activoCheckbox" />
+                    <label class="form-check-label" for="activoCheckbox">
+                        Cliente Activo
+                    </label>
+                </div>
+
+                <!-- Botones -->
+                <div class="d-grid gap-2 d-sm-flex justify-content-sm-end">
+                    <a href="@Url.Action("Index", "Usuarios")" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Guardar Cliente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

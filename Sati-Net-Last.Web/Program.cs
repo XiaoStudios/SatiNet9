@@ -1,4 +1,11 @@
+using System.Net;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Listen(IPAddress.Loopback, 5289); // fuerza bind a 127.0.0.1:5289
+});
 
 // Add services to the container.
 builder.Services.AddControllersWithViews()
