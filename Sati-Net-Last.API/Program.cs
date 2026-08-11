@@ -30,6 +30,7 @@ builder.Services.AddDbContext<SatiDevContext>(options => options.UseMySql(builde
 builder.Services.AddSingleton<Terminal>();
 builder.Services.AddSingleton<TerminalRepo>();
 builder.Services.AddScoped<IExcelRepository, ExcelRepository>();
+builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IMTRepo, MTRepo>();
 
 builder.Services.AddSingleton<OperativeAlgorithmSvc>();

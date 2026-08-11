@@ -1,1 +1,1 @@
-dotnet ef dbcontext scaffold "server=localhost;database=sati_dev;user=root;password=toor;" Pomelo.EntityFrameworkCore.MySql -o DBContext
+dotnet ef dbcontext scaffold "server=localhost;database=sati_dev;user=root;password=YOUR_PASSWORD;" Pomelo.EntityFrameworkCore.MySql --project "Sati-Net-Last.API" --output-dir "..\Sati-Models\DBModels" --context SatiDevContext --context-dir "Data" --force --no-onconfiguring
