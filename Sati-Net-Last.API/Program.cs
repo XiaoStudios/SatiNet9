@@ -8,6 +8,8 @@ using Sati_Net_Last.API.MTRepositories.Interfaces;
 using Sati_Net_Last.API.Repositories.Implementations;
 using Sati_Net_Last.API.Repositories.Interfaces;
 using Sati_Net_Last.API.Services;
+using System.Net;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,7 +24,16 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Forzar Kestrel a enlazar explícitamente en 127.0.0.1:5289
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Listen(IPAddress.Loopback, 5289); // puerto forzado a 5289
+});
+
 var serverVersion = new MySqlServerVersion(new Version(8, 0, 46));
+
+// Nota: Asegúrese de no usar ASPNETCORE_URLS ni launchSettings.json con otro puerto para evitar conflictos.
+
 // builder.Services.AddDbContext<SatiDevContext>(options => options.UseMySql("server=localhost;database=mydb;user=myuser;password=mypassword", serverVersion));
 builder.Services.AddDbContext<SatiDevContext>(options => options.UseMySql(builder.Configuration.GetConnectionString("sati_dev_db"), serverVersion));
 // builder.Services.AddDbContext<SatiDevContext>(options => options.UseMySql(builder.Configuration.GetConnectionString("sati_dev_db"), ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("sati_dev_db"))));

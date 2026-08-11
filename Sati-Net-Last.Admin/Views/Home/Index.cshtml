@@ -2,7 +2,38 @@
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Mensaje de Alerta -->
+            @if (TempData["Mensaje"] != null)
+            {
+                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                    @TempData["Mensaje"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <!-- Mensaje de Bienvenida -->
+            <div class="mb-4">
+                <h1 class="display-4">¡Bienvenido!</h1>
+                <p class="lead">Administración de SatiNet - Sistema de Control MetaTrader</p>
+            </div>
+
+            <!-- Card Control de MetaTrader -->
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Control de MetaTrader</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text mb-4">Haz clic en el botón para conectar a MetaTrader:</p>
+                    <form method="post" action="@Url.Action("ToggleMTConnection", "Home")">
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            Conectar a MetaTrader
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
