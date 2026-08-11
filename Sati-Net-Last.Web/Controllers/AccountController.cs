@@ -34,7 +34,7 @@ public class AccountController : Controller
     public async Task<IActionResult> Login(LoginRequestDto request)
     {
         if (!ModelState.IsValid ||
-            string.IsNullOrWhiteSpace(request.Username) ||
+            string.IsNullOrWhiteSpace(request.Email) ||
             string.IsNullOrWhiteSpace(request.Password))
         {
             ViewBag.Error = "Ingresa tu usuario y contraseña.";
@@ -60,8 +60,8 @@ public class AccountController : Controller
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning(
-                    "El API rechazó el login de {Username}. Status: {StatusCode}",
-                    request.Username,
+                    "El API rechazó el login de {Email}. Status: {StatusCode}",
+                    request.Email,
                     response.StatusCode);
 
                 ViewBag.Error = "No fue posible validar el acceso. Intenta nuevamente.";
@@ -75,8 +75,8 @@ public class AccountController : Controller
             if (loginResponse == null)
             {
                 _logger.LogError(
-                    "El API devolvió una respuesta de login vacía para {Username}.",
-                    request.Username);
+                    "El API devolvió una respuesta de login vacía para {Email}.",
+                    request.Email);
 
                 ViewBag.Error = "La respuesta del servidor no es válida.";
                 return View(request);
@@ -99,8 +99,8 @@ public class AccountController : Controller
             // El Web no pudo comunicarse con el API.
             _logger.LogError(
                 ex,
-                "No fue posible conectar con BackendAPI durante el login de {Username}.",
-                request.Username);
+                "No fue posible conectar con BackendAPI durante el login de {Email}.",
+                request.Email);
 
             ViewBag.Error = "No se pudo conectar con el servidor de autenticación.";
             return View(request);
@@ -112,7 +112,7 @@ public class AccountController : Controller
     public async Task<IActionResult> LoginAjax([FromForm] LoginRequestDto request)
     {
         if (!ModelState.IsValid ||
-            string.IsNullOrWhiteSpace(request.Username) ||
+            string.IsNullOrWhiteSpace(request.Email) ||
             string.IsNullOrWhiteSpace(request.Password))
         {
             return BadRequest(new { success = false, message = "Ingresa tu usuario y contraseña." });
@@ -130,8 +130,8 @@ public class AccountController : Controller
 
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("El API rechazó el login de {Username}. Status: {StatusCode}",
-                    request.Username, response.StatusCode);
+                _logger.LogWarning("El API rechazó el login de {Email}. Status: {StatusCode}",
+                    request.Email, response.StatusCode);
 
                 return StatusCode((int)response.StatusCode, new
                 {
@@ -160,8 +160,8 @@ public class AccountController : Controller
         }
         catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "No fue posible conectar con BackendAPI durante el login de {Username}.",
-                request.Username);
+            _logger.LogError(ex, "No fue posible conectar con BackendAPI durante el login de {Email}.",
+                request.Email);
 
             return StatusCode(500, new
             {

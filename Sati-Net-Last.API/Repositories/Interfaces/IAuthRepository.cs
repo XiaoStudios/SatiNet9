@@ -4,7 +4,7 @@ namespace Sati_Net_Last.API.Repositories.Interfaces;
 
 public interface IAuthRepository
 {
-    Task<AdminUser?> GetEnabledUserByUsernameAsync(string username);
+    Task<AdminUser?> GetEnabledUserByEmailAsync(string email);
     Task<List<string>> GetActiveSymbolsByUserIdAsync(int userId);
     Task UpdateLastLoginAsync(int userId);
 }

@@ -39,16 +39,18 @@
                 @Html.AntiForgeryToken()
 
                 <div class="mb-3">
-                    <label asp-for="Username" class="sati-label">Usuario</label>
-                    <input asp-for="Username" class="form-control sati-input-control" placeholder="Ingresa tu usuario"
-                           autocomplete="username" />
-                    <span asp-validation-for="Username" class="text-danger small"></span>
+                          <label asp-for="Email" class="sati-label">Correo electrónico</label>
+                          <input asp-for="Email"
+                              type="email"
+                              class="form-control sati-input-control"
+                              autocomplete="email"
+                              placeholder="Ingresa tu correo" />
+                          <span asp-validation-for="Email" class="text-danger small"></span>
                 </div>
 
                 <div class="mb-4">
                     <label asp-for="Password" class="sati-label">Contraseña</label>
-                    <input asp-for="Password" type="password" class="form-control sati-input-control"
-                           placeholder="Ingresa tu contraseña" autocomplete="current-password" />
+                    <input asp-for="Password" type="password" class="form-control sati-input-control" placeholder="Ingresa tu contraseña" autocomplete="current-password" />
                     <span asp-validation-for="Password" class="text-danger small"></span>
                 </div>
 

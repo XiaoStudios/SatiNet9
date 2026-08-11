@@ -15,11 +15,11 @@ public class AuthRepository : IAuthRepository
         _logger = logger;
     }
 
-    public async Task<AdminUser?> GetEnabledUserByUsernameAsync(string username)
+    public async Task<AdminUser?> GetEnabledUserByEmailAsync(string email)
     {
         return await _satiDevContext.AdminUsers
             .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Username == username && u.IsEnabled == true);
+            .FirstOrDefaultAsync(u => u.Email == email && u.IsEnabled == true);
     }
 
     public async Task<List<string>> GetActiveSymbolsByUserIdAsync(int userId)

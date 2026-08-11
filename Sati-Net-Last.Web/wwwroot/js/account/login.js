@@ -17,12 +17,12 @@ var LoginJS =
         e.preventDefault();
         LoginJS.ClearError();
 
-        const username = $("#Username").val()?.trim();
+        const email = $("#Email").val()?.trim();
         const password = $("#Password").val()?.trim();
         const token = $("#loginForm input[name='__RequestVerificationToken']").val();
         const url = $("#loginForm").data("ajax-url");
 
-        if (!username || !password) {
+        if (!email || !password) {
             LoginJS.ShowError("Ingresa tu usuario y contraseña.");
             return;
         }
@@ -32,7 +32,7 @@ var LoginJS =
             url: url,
             data: {
                 __RequestVerificationToken: token,
-                Username: username,
+    Email: email,
                 Password: password
             },
             dataType: "json",

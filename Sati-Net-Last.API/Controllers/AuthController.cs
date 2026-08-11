@@ -22,18 +22,18 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
     {
-        if (request == null || string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password))
+        if (request == null || string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
             return BadRequest(new
             {
-                message = "Nombre de usuario y contrasenia son requeridos"
+                message = "Correo electrónico y contraseña son requeridos"
             });
         
-        var username = request.Username.Trim();
+        var email = request.Email.Trim();
         var passwordHash = ComputeSha256Hex(request.Password);
-        var user = await _authRepository.GetEnabledUserByUsernameAsync(username);
+        var user = await _authRepository.GetEnabledUserByEmailAsync(email);
 
         if (user == null || !string.Equals(user.PasswordHash, passwordHash, StringComparison.OrdinalIgnoreCase))
-            return Unauthorized(new { message = "Usuario o contrasenia incorrecta" });
+            return Unauthorized(new { message = "Correo o contraseña incorrectos" });
         
         var symbols = await _authRepository.GetActiveSymbolsByUserIdAsync(user.Id);
         await _authRepository.UpdateLastLoginAsync(user.Id);
