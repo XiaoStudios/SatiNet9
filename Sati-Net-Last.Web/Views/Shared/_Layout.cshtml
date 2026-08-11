@@ -16,7 +16,7 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="@Url.Action("Index", "Home")">Home</a>
                     </li>
@@ -30,6 +30,29 @@
                         <a class="nav-link" href="@Url.Action("Index", "HistoryMT")">History MT</a>
                     </li>
                 </ul>
+
+                @{
+                    var sessionUser = Context.Session.GetString("FullName")
+                                ?? Context.Session.GetString("Username");
+                }
+
+                @if (!string.IsNullOrWhiteSpace(sessionUser))
+                {
+                    <div class="d-flex align-items-center gap-2">
+                        <span style="color:rgba(255,255,255,.75); font-size:13px;">
+                            @sessionUser
+                        </span>
+
+                        <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <button type="submit"
+                                    class="btn btn-sm"
+                                    style="border:1px solid rgba(255,255,255,.35); color:#fff; background:transparent;">
+                                Cerrar Sesión
+                            </button>
+                        </form>
+                    </div>
+                }
             </div>
         </div>
     </nav>

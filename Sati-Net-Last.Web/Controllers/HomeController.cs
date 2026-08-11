@@ -15,6 +15,10 @@ public class HomeController : Controller
 
     public IActionResult Index()
     {
+        var userId = HttpContext.Session.GetString("UserId");
+        if (string.IsNullOrWhiteSpace(userId))
+            return RedirectToAction("Login", "Account");
+
         return View();
     }
 

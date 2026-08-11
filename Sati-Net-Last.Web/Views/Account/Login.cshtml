@@ -1,0 +1,71 @@
+@model Sati_Models.DTOs.LoginRequestDto
+
+@{
+    ViewData["Title"] = "Iniciar Sesión";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Sati Net Last</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/sati_design.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/account/login.css" asp-append-version="true" />
+</head>
+
+<body>
+    <main class="login-wrapper">
+        <section class="login-card">
+            <h2>Iniciar Sesión</h2>
+            <p class="login-subtitle">Trading Platform — Sati Net Last</p>
+
+            <div id="loginError"
+                 class="alert alert-warning login-error"
+                 role="alert"
+                 style="display:@(ViewBag.Error != null ? "block" : "none");">
+                @(ViewBag.Error ?? string.Empty)
+            </div>
+
+            <form id="loginForm"
+                  method="post"
+                  asp-controller="Account"
+                  asp-action="Login"
+                  data-ajax-url="@Url.Action("LoginAjax", "Account")">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    <label asp-for="Username" class="sati-label">Usuario</label>
+                    <input asp-for="Username" class="form-control sati-input-control" placeholder="Ingresa tu usuario"
+                           autocomplete="username" />
+                    <span asp-validation-for="Username" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="Password" class="sati-label">Contraseña</label>
+                    <input asp-for="Password" type="password" class="form-control sati-input-control"
+                           placeholder="Ingresa tu contraseña" autocomplete="current-password" />
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+
+                <button id="btnLogin" type="submit" class="sati-load-btn">Ingresar</button>
+            </form>
+        </section>
+    </main>
+
+    <footer class="footer mt-auto py-3 bg-dark text-white">
+        <div class="container text-center">
+            <span>&copy; 2026 - Sati Net Last - Trading Platform</span>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js" asp-append-version="true"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/account/login.js" asp-append-version="true"></script>
+</body>
+
+</html>
