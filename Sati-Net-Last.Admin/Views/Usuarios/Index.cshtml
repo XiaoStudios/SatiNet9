@@ -1,17 +1,17 @@
-@model IEnumerable<UsuarioBroker>
+@model IEnumerable<UserSymbol>
 
 @{
-    ViewData["Title"] = "Gestión de Clientes";
+    ViewData["Title"] = "Gestión de Símbolos";
 }
 
 <div class="container py-5">
     <div class="row mb-4">
         <div class="col-md-8">
-            <h1>Gestión de Clientes - Usuarios Broker</h1>
+            <h1>Gestión de Símbolos - Asignación a Usuarios</h1>
         </div>
         <div class="col-md-4 text-end">
             <a href="@Url.Action("Create", "Usuarios")" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> Nuevo Cliente
+                <i class="bi bi-plus-circle"></i> Asignar Símbolo
             </a>
         </div>
     </div>
@@ -25,7 +25,7 @@
         </div>
     }
 
-    <!-- Tabla de Usuarios -->
+    <!-- Tabla de Símbolos Asignados -->
     @if (Model.Any())
     {
         <div class="table-responsive">
@@ -33,36 +33,37 @@
                 <thead class="table-dark">
                     <tr>
                         <th>ID</th>
-                        <th>Nombre Completo</th>
-                        <th>Correo</th>
-                        <th>Par de Moneda</th>
+                        <th>Usuario</th>
+                        <th>Símbolo</th>
                         <th>Estado</th>
-                        <th>Fecha Registro</th>
+                        <th>Asignado el</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var usuario in Model)
+                    @foreach (var symbol in Model)
                     {
                         <tr>
-                            <td>@usuario.Id</td>
-                            <td>@usuario.NombreCompleto</td>
-                            <td>@usuario.Correo</td>
-                            <td><span class="badge bg-info">@usuario.ParMoneda</span></td>
+                            <td>@symbol.Id</td>
+                            <td>@(symbol.User?.FullName ?? "N/A")</td>
+                            <td><span class="badge bg-info">@symbol.SymbolStr</span></td>
                             <td>
-                                @if (usuario.Activo)
+                                @if (symbol.IsActive)
                                 {
                                     <span class="badge bg-success">Activo</span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-danger">Inactivo</span>
+                                    <span class="badge bg-warning">Inactivo</span>
                                 }
                             </td>
-                            <td>@usuario.FechaRegistro.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@symbol.AssignedAt.ToString("dd/MM/yyyy HH:mm")</td>
                             <td>
-                                <a href="#" class="btn btn-sm btn-warning">Editar</a>
-                                <a href="#" class="btn btn-sm btn-danger">Eliminar</a>
+                                <a href="@Url.Action("Edit", "Usuarios", new { id = symbol.Id })" class="btn btn-sm btn-warning">Editar</a>
+                                <form method="post" action="@Url.Action("Delete", "Usuarios", new { id = symbol.Id })" style="display:inline;">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro?')">Eliminar</button>
+                                </form>
                             </td>
                         </tr>
                     }
@@ -73,8 +74,8 @@
     else
     {
         <div class="alert alert-info" role="alert">
-            <h4 class="alert-heading">Sin clientes registrados</h4>
-            <p>No hay usuarios broker registrados. <a href="@Url.Action("Create", "Usuarios")">Crea el primer cliente aquí</a>.</p>
+            <h4 class="alert-heading">Sin asignaciones registradas</h4>
+            <p>No hay símbolos asignados. <a href="@Url.Action("Create", "Usuarios")">Crea la primera asignación aquí</a>.</p>
         </div>
     }
 </div>
