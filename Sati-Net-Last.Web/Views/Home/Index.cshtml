@@ -1,11 +1,43 @@
 ﻿@* filepath: C:\vsprojs\Sati-Net-Last\Views\Home\Index.cshtml *@
 @{
     ViewData["Title"] = "Home";
+    var userSymbols = ViewBag.UserSymbols as List<string> ?? new List<string>();
+    var selectedSymbol = ViewBag.SelectedSymbol as string;
 }
 
 <div class="home-container">
     <h1>Bienvenido a Sati Net Last</h1>
     <p class="lead">Sistema de trading integrado con MetaTrader 5</p>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
+                <div>
+                    <h5 class="mb-1">Símbolo activo</h5>
+                    <small class="text-muted">Este filtro se usa para el gráfico en tiempo real y el historial.</small>
+                </div>
+
+                <div style="min-width: 220px; max-width: 260px; width: 100%;">
+                    <label for="userSymbolDropdown" class="form-label visually-hidden">Símbolo</label>
+                    <select id="userSymbolDropdown" class="form-select" @(userSymbols.Count == 0 ? "disabled" : "")>
+                        @if (userSymbols.Count == 0)
+                        {
+                            <option value="">Sin símbolos asignados</option>
+                        }
+                        else
+                        {
+                            @foreach (var symbol in userSymbols)
+                            {
+                                <option value="@symbol" selected="@(symbol == selectedSymbol)">
+                                    @symbol
+                                </option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="features">
         <h3>Funcionalidades:</h3>
@@ -21,3 +53,34 @@
         <p>Asegúrate de que el servicio MTsocketAPI esté en ejecución en <code>https://localhost:5100</code> antes de usar las funcionalidades de trading.</p>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const select = document.getElementById('userSymbolDropdown');
+            if (!select) return;
+
+            const currentSymbol = '@(selectedSymbol ?? string.Empty)';
+            if (currentSymbol) {
+                select.value = currentSymbol;
+                window.currentSelectedSymbol = currentSymbol;
+            }
+
+            select.addEventListener('change', function () {
+                const symbol = this.value;
+                if (!symbol) return;
+
+                fetch('/Home/SetSelectedSymbol?symbol=' + encodeURIComponent(symbol), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                    }
+                }).catch(function () {
+                    console.warn('No se pudo guardar el símbolo activo en la sesión.');
+                });
+
+                window.currentSelectedSymbol = symbol;
+            });
+        });
+    </script>
+}

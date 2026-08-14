@@ -1,0 +1,105 @@
+@* Backup de la vista anterior *@
+@* filepath: C:\vsprojs\Sati-Net-Last\Views\SatiTrader\Index.cshtml *@
+@{
+    ViewData["Title"] = "Sati Trader";
+    var userSymbols = ViewBag.UserSymbols as List<string> ?? new List<string>();
+    var selectedSymbol = ViewBag.SelectedSymbol as string;
+    var userId = Context.Session.GetString("UserId");
+    var noSymbolsMessage = ViewBag.NoSymbolsMessage as string;
+}
+
+<div class="satitrader-container">
+    @if (!string.IsNullOrWhiteSpace(noSymbolsMessage))
+    {
+        <div class="alert alert-warning" role="alert">
+            @noSymbolsMessage
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
+        <div>
+            <h2 class="mb-1">Sati Trader - Gráfico en Tiempo Real</h2>
+            <p class="mb-0 text-muted">Gráfico tipo Bitfinex (velas, SMA, volumen, zoom/pan)</p>
+        </div>
+
+        <div style="min-width: 200px; max-width: 260px; width: 100%;">
+            <label for="traderSymbolDropdown" class="form-label visually-hidden">Símbolo</label>
+            <select id="traderSymbolDropdown" class="form-select" @(userSymbols.Count == 0 ? "disabled" : "")>
+                @if (userSymbols.Count == 0)
+                {
+                    <option value="">Sin símbolos asignados</option>
+                }
+                else
+                {
+                    @foreach (var symbol in userSymbols)
+                    {
+                        <option value="@symbol" selected="@(symbol == selectedSymbol)">@symbol</option>
+                    }
+                }
+            </select>
+        </div>
+    </div>
+
+    <hr />
+
+    <div id="traderChartContainer" style="width:900px;height:500px;background:#181a20;margin-top:20px;"></div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropdown = document.getElementById('traderSymbolDropdown');
+            const currentSymbol = '@(selectedSymbol ?? string.Empty)';
+            const userId = '@(userId ?? string.Empty)';
+
+            const initRealtimeIfAllowed = () => {
+                if (!userId) return;
+
+                fetch(`https://localhost:5100/api/metatrader/CheckRealtimeAccess?userId=${encodeURIComponent(userId)}`)
+                    .then(async response => {
+                        const payload = await response.json().catch(() => ({}));
+                        if (!response.ok || !payload.success) {
+                            alert(payload.message || 'No tienes permisos para ver el realtime de MT. Habla con el administrador.');
+                            return;
+                        }
+
+                        if (dropdown && payload.selectedSymbol) {
+                            dropdown.value = payload.selectedSymbol;
+                            window.currentSelectedSymbol = payload.selectedSymbol;
+                        }
+
+                        if (payload.selectedSymbol) {
+                            initSatiTrader();
+                        }
+                    })
+                    .catch(() => {
+                        console.warn('No se pudo validar el acceso al realtime en la API.');
+                    });
+            };
+
+            if (dropdown) {
+                if (currentSymbol) {
+                    dropdown.value = currentSymbol;
+                    window.currentSelectedSymbol = currentSymbol;
+                }
+
+                dropdown.addEventListener('change', function () {
+                    const symbol = this.value;
+                    if (!symbol) return;
+
+                    window.currentSelectedSymbol = symbol;
+                    fetch('/Home/SetSelectedSymbol?symbol=' + encodeURIComponent(symbol), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' }
+                    });
+
+                    initRealtimeIfAllowed();
+                });
+            }
+
+            if (currentSymbol) {
+                initRealtimeIfAllowed();
+            }
+        });
+    </script>
+}

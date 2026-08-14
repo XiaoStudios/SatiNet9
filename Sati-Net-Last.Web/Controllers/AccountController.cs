@@ -82,17 +82,26 @@ public class AccountController : Controller
                 return View(request);
             }
 
-            // Guardar datos mínimos del usuario en Session.
+            // Login solo autentica al usuario. La validación de permisos por símbolos
+            // se hace cuando intenta entrar a la pantalla con MT5 en tiempo real.
             HttpContext.Session.SetString("UserId", loginResponse.UserId.ToString());
             HttpContext.Session.SetString("Username", loginResponse.Username);
             HttpContext.Session.SetString("FullName", loginResponse.FullName);
             HttpContext.Session.SetString("IsAdmin", loginResponse.IsAdmin.ToString());
 
-            // Una lista se serializa como JSON antes de guardarla en Session.
-            var symbolsJson = JsonSerializer.Serialize(loginResponse.Symbols);
+            var symbolsJson = JsonSerializer.Serialize(loginResponse.Symbols ?? new List<string>());
             HttpContext.Session.SetString("UserSymbols", symbolsJson);
 
-            return RedirectToAction("Index", "Home");
+            if (loginResponse.Symbols != null && loginResponse.Symbols.Count > 0)
+            {
+                HttpContext.Session.SetString("SelectedSymbol", loginResponse.Symbols.First());
+            }
+            else
+            {
+                HttpContext.Session.Remove("SelectedSymbol");
+            }
+
+            return RedirectToAction("Index", "SatiTrader");
         }
         catch (HttpRequestException ex)
         {
@@ -150,12 +159,21 @@ public class AccountController : Controller
             HttpContext.Session.SetString("Username", loginResponse.Username);
             HttpContext.Session.SetString("FullName", loginResponse.FullName);
             HttpContext.Session.SetString("IsAdmin", loginResponse.IsAdmin.ToString());
-            HttpContext.Session.SetString("UserSymbols", JsonSerializer.Serialize(loginResponse.Symbols));
+            HttpContext.Session.SetString("UserSymbols", JsonSerializer.Serialize(loginResponse.Symbols ?? new List<string>()));
+
+            if (loginResponse.Symbols != null && loginResponse.Symbols.Count > 0)
+            {
+                HttpContext.Session.SetString("SelectedSymbol", loginResponse.Symbols.First());
+            }
+            else
+            {
+                HttpContext.Session.Remove("SelectedSymbol");
+            }
 
             return Ok(new
             {
                 success = true,
-                redirectUrl = Url.Action("Index", "Home")
+                redirectUrl = Url.Action("Index", "SatiTrader")
             });
         }
         catch (HttpRequestException ex)

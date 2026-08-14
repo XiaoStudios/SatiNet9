@@ -30,7 +30,7 @@ private readonly ILogger<OperativeAlgorithmSvc> _logger;
     public List<Rates> CalculateBatch(List<Rates> rates, int period, ParametersAlgorithmDto parameters)
     {
         if (rates == null || rates.Count == 0)
-            return rates;
+            return new List<Rates>();
             
         _logger.LogInformation($"Calculando algoritmo BATCH: {rates.Count} registros, período {period}");
         _logger.LogInformation($"Parámetros: pt={parameters.Pt}, pr={parameters.Pr}, sigma={parameters.Sigma}");

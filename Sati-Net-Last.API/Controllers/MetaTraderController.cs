@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Sati_Models.Dtos;
 using Sati_Net_Last.API.MTRepositories.Interfaces;
+using Sati_Net_Last.API.Repositories.Interfaces;
 using Sati_Net_Last.API.Services;
 
 namespace Sati_Net_Last.API.Controllers;
@@ -12,17 +13,20 @@ public class MetaTraderController : ControllerBase
     private readonly ILogger<MetaTraderController> _logger;
     private readonly OperativeAlgorithmSvc _operativeAlgorithmSvc;
     private readonly IMTRepo _metaTrader;
+    private readonly IAuthRepository _authRepository;
 
     public MetaTraderController
     (
         ILogger<MetaTraderController> logger,
         OperativeAlgorithmSvc operativeAlgorithmSvc,
-        IMTRepo metaTrader
+        IMTRepo metaTrader,
+        IAuthRepository authRepository
     )
     {
         _logger = logger;
         _metaTrader = metaTrader;
         _operativeAlgorithmSvc = operativeAlgorithmSvc;
+        _authRepository = authRepository;
     }
 
     [HttpPost("ConnectToMT")]
@@ -56,18 +60,47 @@ public class MetaTraderController : ControllerBase
     }
 
     [HttpPost("GetPriceHistory")]
-    public IActionResult GetPriceHistory()
+    [HttpGet("GetPriceHistory")]
+    public IActionResult GetPriceHistory([FromQuery] string symbol)
     {
+        if (string.IsNullOrWhiteSpace(symbol))
+            return BadRequest("El símbolo es obligatorio.");
+
         try
         {
-            var priceHistory = _metaTrader.GetPriceHistory();
+            var priceHistory = _metaTrader.GetPriceHistory(symbol);
             return Ok(priceHistory);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving price history.");
+            _logger.LogError(ex, "Error retrieving price history for symbol {Symbol}.", symbol);
             return StatusCode(500, "Internal server error while retrieving price history.");
         }
+    }
+
+    [HttpGet("CheckRealtimeAccess")]
+    public async Task<IActionResult> CheckRealtimeAccess([FromQuery] int userId)
+    {
+        if (userId <= 0)
+            return BadRequest("El usuario es obligatorio.");
+
+        var symbols = await _authRepository.GetActiveSymbolsByUserIdAsync(userId);
+
+        if (symbols == null || symbols.Count == 0)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                success = false,
+                message = "Tu usuario no tiene símbolos asignados. Habla con el administrador para que te asigne uno."
+            });
+        }
+
+        return Ok(new
+        {
+            success = true,
+            symbols,
+            selectedSymbol = symbols.First()
+        });
     }
 
     // [HttpGet("GetDatePriceHistory")]
