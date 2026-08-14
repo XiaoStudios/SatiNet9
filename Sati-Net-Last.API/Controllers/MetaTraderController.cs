@@ -30,17 +30,79 @@ public class MetaTraderController : ControllerBase
     }
 
     [HttpPost("ConnectToMT")]
-    public IActionResult ConnectToMT()
+    public async Task<IActionResult> ConnectToMT()
     {
         try
         {
-            _metaTrader.ConnectToMetaTrader();
+            await _metaTrader.ConnectToMetaTrader();
             return Ok("Connected to MetaTrader");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error connecting to MetaTrader.");
             return StatusCode(500, "Internal server error while connecting to MetaTrader.");
+        }
+    }
+
+    [HttpPost("TrackSymbols")]
+    public async Task<IActionResult> TrackSymbols([FromBody] List<string> symbols)
+    {
+        try
+        {
+            await _metaTrader.TrackSymbolsAsync(symbols ?? new List<string>());
+            return Ok(new
+            {
+                success = true,
+                symbols = symbols ?? new List<string>()
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { success = false, message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating symbols tracked by MetaTrader.");
+            return StatusCode(500, "Error updating MetaTrader tracking.");
+        }
+    }
+
+    [HttpPost("TrackSymbolsForUser")]
+    public async Task<IActionResult> TrackSymbolsForUser([FromQuery] int userId)
+    {
+        if (userId <= 0)
+            return BadRequest(new { success = false, message = "El usuario es obligatorio." });
+
+        try
+        {
+            var symbols = await _authRepository.GetActiveSymbolsByUserIdAsync(userId);
+
+            if (symbols == null || symbols.Count == 0)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new
+                {
+                    success = false,
+                    message = "Tu usuario no tiene símbolos asignados. Habla con el administrador para que te asigne uno."
+                });
+            }
+
+            await _metaTrader.TrackSymbolsAsync(symbols);
+
+            return Ok(new
+            {
+                success = true,
+                symbols,
+                selectedSymbol = symbols.First()
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { success = false, message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error tracking symbols for user {UserId}", userId);
+            return StatusCode(500, new { success = false, message = "Error actualizando tracking para el usuario." });
         }
     }
 

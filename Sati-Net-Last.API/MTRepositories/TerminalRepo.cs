@@ -5,6 +5,7 @@ namespace Sati_Net_Last.API.MTRepositories;
 public class TerminalRepo
 {
     private readonly Terminal _terminal;
+    public bool IsConnected { get; private set; }
 
     public TerminalRepo(Terminal terminal)
     {
@@ -18,7 +19,11 @@ public class TerminalRepo
 
     // Puedes agregar aquí métodos utilitarios para exponer funcionalidad de Terminal si lo deseas
     // Ejemplo:
-    public void Connect() => _terminal.Connect();
+    public bool Connect()
+    {
+        IsConnected = _terminal.Connect();
+        return IsConnected;
+    }
     
     public void TrackPrices(List<string> symbols) => _terminal.TrackPrices(symbols);
 

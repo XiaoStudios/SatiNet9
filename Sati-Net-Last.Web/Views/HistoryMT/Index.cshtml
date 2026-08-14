@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "History MT";
     var symbols = ViewBag.Symbols as List<string> ?? new List<string>();
+    var noSymbolsMessage = ViewBag.NoSymbolsMessage as string;
 }
 
 <div class="sati-page">
@@ -9,7 +10,13 @@
         History MT - Historial de Precios por Símbolo
     </h2>
 
-    @if (symbols.Count > 0)
+    @if (!string.IsNullOrWhiteSpace(noSymbolsMessage))
+    {
+        <div class="alert alert-warning" style="padding: 20px; border-radius: 8px; border-left: 4px solid #ffc107;">
+            <strong>Sin permisos:</strong> @noSymbolsMessage
+        </div>
+    }
+    else if (symbols.Count > 0)
     {
         <div class="sati-container">
             <div class="row g-3 mb-4">

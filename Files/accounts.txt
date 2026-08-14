@@ -71,3 +71,12 @@ Login    : 5052553240
 Password : _rAb1iZb
 Investor : @dA1OvAf
 
+*--*
+13-Ago-2026
+*--*
+Name     : ivan vazquez
+Type     : Forex Hedged USD
+Server   : MetaQuotes-Demo
+Login    : 111086482
+Password : 6d!qYdSn
+Investor : A!7lNcTr

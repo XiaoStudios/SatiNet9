@@ -5,6 +5,7 @@
     var selectedSymbol = ViewBag.SelectedSymbol as string;
     var userId = Context.Session.GetString("UserId");
     var noSymbolsMessage = ViewBag.NoSymbolsMessage as string;
+    var backendApiBaseUrl = ViewBag.BackendApiBaseUrl as string ?? "http://localhost:5289/";
 }
 
 <style>
@@ -17,6 +18,7 @@
     .main-container {
         display: flex;
         height: calc(100vh - 56px);
+        min-height: 0;
         gap: 1rem;
         padding: 1rem;
         background: #f8f9fa;
@@ -24,6 +26,7 @@
 
     .controls-panel {
         width: 280px;
+        min-width: 220px;
         background: white;
         border: 1px solid #dee2e6;
         border-radius: 4px;
@@ -33,6 +36,7 @@
         flex-direction: column;
         gap: 1.5rem;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        min-height: 0;
     }
 
     .control-section h6 {
@@ -116,6 +120,8 @@
 
     .chart-container {
         flex: 1;
+        min-width: 0;
+        min-height: 0;
         background: white;
         border: 1px solid #dee2e6;
         border-radius: 4px;
@@ -173,6 +179,8 @@
     #traderChartContainer {
         flex: 1;
         min-height: 400px;
+        min-width: 0;
+        width: 100%;
         background: #000;
         border-radius: 4px;
         border: 1px solid #dee2e6;
@@ -180,6 +188,7 @@
 
     .info-panel {
         width: 300px;
+        min-width: 240px;
         background: white;
         border: 1px solid #dee2e6;
         border-radius: 4px;
@@ -189,6 +198,7 @@
         flex-direction: column;
         gap: 1.5rem;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        min-height: 0;
     }
 
     .info-section h6 {
@@ -288,6 +298,70 @@
             overflow-x: auto;
         }
     }
+
+    .chart-controls {
+        position: relative;
+        height: 100%;
+    }
+
+    #traderLiveIndicator {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        z-index: 10;
+        transition: opacity 0.3s ease;
+        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+    }
+
+    #traderLiveIndicator .live-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: white;
+        animation: liveIndicatorPulse 1.5s ease-in-out infinite;
+    }
+
+    @@keyframes liveIndicatorPulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.2); opacity: 0.7; }
+    }
+
+    #returnToLiveBtn {
+        position: absolute;
+        bottom: 2rem;
+        right: 2rem;
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        z-index: 20;
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        transition: all 0.3s ease;
+        display: none;
+    }
+
+    #returnToLiveBtn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 123, 255, 0.5);
+    }
+
+    #returnToLiveBtn:active {
+        transform: translateY(0);
+    }
 </style>
 
 <!-- Main Container -->
@@ -375,14 +449,15 @@
         }
         else
         {
-            <div id="traderChartContainer">
-                <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #555; font-size: 1rem;">
-                    <div style="text-align: center;">
-                        <i class="fas fa-wifi" style="font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.3;"></i>
-                        <p>Esperando datos en tiempo real...</p>
-                        <small style="color: #999;">Velas actualizadas vía SignalR</small>
-                    </div>
+            <div class="chart-controls">
+                <div id="traderLiveIndicator">
+                    <span class="live-dot"></span>
+                    EN VIVO
                 </div>
+                <div id="traderChartContainer"></div>
+                <button id="returnToLiveBtn" onclick="returnToLiveChart()">
+                    <i class="fas fa-arrow-right"></i> Volver al Live
+                </button>
             </div>
         }
     </div>
@@ -425,20 +500,25 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/charts.js" asp-append-version="true"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const dropdown = document.getElementById('symbolDropdown');
             const currentSymbol = '@(selectedSymbol ?? string.Empty)';
             const userId = '@(userId ?? string.Empty)';
+            window.currentUserId = userId;
+            window.backendApiBaseUrl = '@backendApiBaseUrl';
 
             const initRealtimeIfAllowed = () => {
                 if (!userId) return;
 
-                fetch(`https://localhost:5100/api/metatrader/CheckRealtimeAccess?userId=${encodeURIComponent(userId)}`)
+                fetch(`${window.backendApiBaseUrl}api/metatrader/TrackSymbolsForUser?userId=${encodeURIComponent(userId)}`, {
+                    method: 'POST'
+                })
                     .then(async response => {
                         const payload = await response.json().catch(() => ({}));
                         if (!response.ok || !payload.success) {
-                            console.warn(payload.message || 'No tienes permisos para ver el realtime de MT.');
+                            console.warn(payload.message || 'No se pudo activar tracking realtime para el usuario.');
                             return;
                         }
 
@@ -484,15 +564,18 @@
                 initRealtimeIfAllowed();
             }
 
-            // Simular actualización de timestamp
-            setInterval(() => {
-                const now = new Date();
-                const seconds = now.getSeconds();
+            const updateLastTimestamp = () => {
                 const updateElement = document.getElementById('lastUpdate');
-                if (updateElement) {
-                    updateElement.innerHTML = 'Hace ' + seconds + 's';
-                }
-            }, 1000);
+                if (!updateElement || !window.lastRealtimeTimestamp) return;
+
+                const diffSeconds = Math.max(0, Math.floor((Date.now() - window.lastRealtimeTimestamp) / 1000));
+                updateElement.textContent = `Hace ${diffSeconds}s`;
+            };
+
+            window.lastRealtimeTimestamp = Date.now();
+            updateLastTimestamp();
+
+            setInterval(updateLastTimestamp, 1000);
         });
     </script>
 }

@@ -5,6 +5,7 @@ namespace Sati_Net_Last.API.MTRepositories.Interfaces;
 public interface IMTRepo
 {
     public Task ConnectToMetaTrader();
+    public Task TrackSymbolsAsync(List<string> symbols);
     public List<string> GetSymbolList();
     public List<Rates> GetPriceHistory(string symbol);
     Task<List<Rates>> GetDatePriceHistoryAsync(DateTime dateFilter, string symbolStr, int wamPeriod);

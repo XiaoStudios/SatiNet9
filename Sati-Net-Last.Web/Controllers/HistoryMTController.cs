@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Sati_Net_Last.Web.Controllers;
@@ -19,25 +20,26 @@ public class HistoryMTController : Controller
 
         try
         {
-            var client = _httpClientFactory.CreateClient("BackendAPI");
-            Console.WriteLine($"Requesting symbol list from API at {client.BaseAddress}");
-            var response = await client.GetAsync("api/MetaTrader/GetSymbolList");
+            var userId = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrWhiteSpace(userId))
+                return RedirectToAction("Login", "Account");
 
-            if (response.IsSuccessStatusCode)
+            var userSymbolsJson = HttpContext.Session.GetString("UserSymbols");
+            if (!string.IsNullOrWhiteSpace(userSymbolsJson))
             {
-                symbols = await response.Content.ReadFromJsonAsync<List<string>>() ?? new List<string>();
-            }
-            else
-            {
-                _logger.LogWarning($"API returned {response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
+                symbols = JsonSerializer.Deserialize<List<string>>(userSymbolsJson) ?? new List<string>();
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al cargar la lista de símbolos");
+            _logger.LogError(ex, "Error al cargar los símbolos asignados al usuario");
         }
 
         ViewBag.Symbols = symbols;
+        ViewBag.NoSymbolsMessage = symbols.Count == 0
+            ? "No tienes símbolos asignados. Habla con el administrador para que te asigne uno para consultar historial."
+            : null;
+
         return View();
     }
 

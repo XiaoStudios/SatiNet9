@@ -17,6 +17,9 @@ public class MTRepo : IMTRepo
     private readonly IHubContext<MetaTraderHub> _mtHubContext;
     private readonly SatiDevContext _satiDevContext;
     private readonly ILogger<MTRepo> _logger; // ✅ Agregar ILogger
+    private readonly SemaphoreSlim _connectLock = new(1, 1);
+    private readonly object _trackingLock = new();
+    private readonly HashSet<string> _trackedSymbols = new(StringComparer.OrdinalIgnoreCase);
     public TerminalRepo _terminalRepo;
 
     public MTRepo
@@ -35,8 +38,12 @@ public class MTRepo : IMTRepo
 
     public async Task ConnectToMetaTrader()
     {
+        await _connectLock.WaitAsync();
         try
         {
+            if (_terminalRepo.IsConnected)
+                return;
+
             _logger.LogInformation("Attempting to connect to MetaTrader...");
             _logger.LogInformation(_terminalRepo.GetTerminal() == null ? "Terminal is null." : "Terminal instance exists.");
             // if (_terminalRepo.GetTerminal() != null)
@@ -49,11 +56,16 @@ public class MTRepo : IMTRepo
             // _terminal.OnPrice += Mt5_OnPrice;
             // _terminal.Connect();
 
-            if (_terminalRepo.GetTerminal().Connect())
+            var connected = _terminalRepo.Connect();
+            if (!connected)
             {
-                _logger.LogInformation($"Connect failed. MTsocketAPI is currently running => {_terminalRepo.GetTerminal().Connect()}");
+                _logger.LogError("Could not connect to MTsocketAPI.");
                 return;
             }
+
+            _terminalRepo.GetTerminal().OnPrice += Mt5_OnPrice;
+
+            _logger.LogInformation("MTsocketAPI connected. Waiting for the administrator to select symbols to track.");
 
             // if (_terminal.Connect())
             // {
@@ -88,6 +100,76 @@ public class MTRepo : IMTRepo
             _logger.LogError("Please check that MTsocketAPI is running. \nError: " + ex.Message);
             // Application.Exit();
         }
+        finally
+        {
+            _connectLock.Release();
+        }
+    }
+
+    public async Task TrackSymbolsAsync(List<string> symbols)
+    {
+        await ConnectToMetaTrader();
+
+        var normalizedSymbols = symbols?
+            .Where(symbol => !string.IsNullOrWhiteSpace(symbol))
+            .Select(NormalizeSymbol)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList() ?? new List<string>();
+
+        if (!_terminalRepo.IsConnected)
+            throw new InvalidOperationException("MetaTrader no está conectado. El administrador debe conectar MT5 primero.");
+
+        List<string> symbolsToTrack;
+
+        if (normalizedSymbols.Count == 0)
+        {
+            lock (_trackingLock)
+            {
+                _trackedSymbols.Clear();
+            }
+
+            _logger.LogInformation("Tracking cleared. No symbols selected by the administrator.");
+            return;
+        }
+
+        lock (_trackingLock)
+        {
+            _trackedSymbols.Clear();
+            foreach (var symbol in normalizedSymbols)
+                _trackedSymbols.Add(symbol);
+
+            symbolsToTrack = _trackedSymbols.ToList();
+        }
+
+        _terminalRepo.TrackPrices(symbolsToTrack);
+        _logger.LogInformation("Tracking symbols active: {Symbols}", string.Join(", ", symbolsToTrack));
+        return;
+    }
+
+    public async Task EnsureSymbolTrackedAsync(string symbol)
+    {
+        if (string.IsNullOrWhiteSpace(symbol))
+            throw new ArgumentException("El símbolo es obligatorio.", nameof(symbol));
+
+        await ConnectToMetaTrader();
+
+        if (!_terminalRepo.IsConnected)
+            throw new InvalidOperationException("MetaTrader no está conectado.");
+
+        var normalizedSymbol = NormalizeSymbol(symbol);
+        List<string>? symbolsToTrack = null;
+
+        lock (_trackingLock)
+        {
+            if (_trackedSymbols.Add(normalizedSymbol))
+                symbolsToTrack = _trackedSymbols.ToList();
+        }
+
+        if (symbolsToTrack == null)
+            return;
+
+        _terminalRepo.TrackPrices(symbolsToTrack);
+        _logger.LogInformation("Auto-tracking enabled for symbol {Symbol}. Active tracked symbols: {Symbols}", normalizedSymbol, string.Join(", ", symbolsToTrack));
     }
 
     public List<string> GetSymbolList()
@@ -113,10 +195,18 @@ public class MTRepo : IMTRepo
                 throw new ArgumentException("El símbolo es obligatorio.", nameof(symbol));
 
             var timeFrameHistory = (TimeFrame)Enum.Parse(typeof(TimeFrame), "PERIOD_M1");
-            var startDate = DateTime.UtcNow.Date;
-            var endDate = DateTime.UtcNow.AddHours(2);
+            // Use a rolling recent window to avoid empty datasets caused by UTC/day-boundary mismatches.
+            var endDate = DateTime.Now;
+            var startDate = endDate.AddHours(-12);
 
             rates = _terminalRepo.GetPriceHistory(symbol, timeFrameHistory, startDate, endDate);
+
+            if (rates.Count == 0)
+            {
+                // Fallback with a wider range for brokers that need a longer history window.
+                startDate = endDate.AddDays(-1);
+                rates = _terminalRepo.GetPriceHistory(symbol, timeFrameHistory, startDate, endDate);
+            }
 
             _logger.LogInformation($"****Price history retrieved for {symbol}: {rates.Count} records. with {startDate} {endDate}");
         }
@@ -648,6 +738,8 @@ public class MTRepo : IMTRepo
         // Logic to disconnect from MetaTrader
     }
 
+    private static string NormalizeSymbol(string symbol) => symbol.Trim().ToUpperInvariant();
+
     // Helper method to convert TimeFrame to TimeSpan
     private TimeSpan TimeSpanFromTF(TimeFrame tf)
     {
@@ -679,8 +771,11 @@ public class MTRepo : IMTRepo
 
     public void Mt5_OnPrice(object? sender, Quote e)
     {
-        // _logger.LogInformation($"All incoming are -> {e}");
-        _mtHubContext.Clients.All.SendAsync("ReceiveMetaTraderData", e).Wait();
+        if (e == null || string.IsNullOrWhiteSpace(e.SYMBOL))
+            return;
+
+        var groupName = MetaTraderHub.BuildSymbolGroup(e.SYMBOL);
+        _mtHubContext.Clients.Group(groupName).SendAsync("ReceiveMetaTraderData", e).Wait();
     }
 
     // Por qué redondear en el backend:

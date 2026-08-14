@@ -32,7 +32,7 @@ var LoginJS =
             url: url,
             data: {
                 __RequestVerificationToken: token,
-    Email: email,
+                Email: email,
                 Password: password
             },
             dataType: "json",
