@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 18
-VisualStudioVersion = 18.9.12023.133 insiders
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sati-Net-Last.API", "Sati-Net-Last.API\Sati-Net-Last.API.csproj", "{596D41AB-1776-7741-7645-7C29623BF7E5}"
 EndProject

@@ -1,0 +1,57 @@
+body {
+min-height: 100vh;
+background-color: #f8f9fa;
+display: flex;
+flex-direction: column;
+}
+
+.navbar-brand {
+font-weight: 700;
+letter-spacing: 0.5px;
+}
+
+.login-wrapper {
+flex: 1;
+display: flex;
+align-items: center;
+justify-content: center;
+padding: 40px 16px;
+}
+
+.login-card {
+width: 100%;
+max-width: 420px;
+padding: 40px 36px;
+background: white;
+border-radius: 12px;
+box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10);
+}
+
+.login-card h2 {
+margin-bottom: 6px;
+color: #212529;
+font-size: 1.5rem;
+font-weight: 700;
+}
+
+.login-subtitle {
+margin-bottom: 28px;
+color: #6c757d;
+font-size: 13px;
+}
+
+.sati-input-control:focus {
+border-color: #5a67d8 !important;
+box-shadow: 0 0 0 3px rgba(90, 103, 216, 0.15) !important;
+outline: none !important;
+}
+
+.disabled-menu {
+color: rgba(255, 255, 255, 0.35) !important;
+cursor: not-allowed;
+pointer-events: none;
+}
+
+.login-error {
+display: none;
+}

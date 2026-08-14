@@ -1,11 +1,4 @@
-using System.Net;
-
 var builder = WebApplication.CreateBuilder(args);
-
-builder.WebHost.ConfigureKestrel(options =>
-{
-    options.Listen(IPAddress.Loopback, 5289); // fuerza bind a 127.0.0.1:5289
-});
 
 // Add services to the container.
 builder.Services.AddControllersWithViews()
@@ -16,6 +9,16 @@ builder.Services.AddHttpClient("BackendAPI", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["BackendAPI:BaseUrl"] ?? "http://localhost:5289/");
     client.Timeout = TimeSpan.FromSeconds(30);
+});
+
+// Almacenamiento temporal para datos de sesión del usuario
+builder.Services.AddDistributedMemoryCache();
+
+builder.Services.AddSession( opts =>
+{
+    opts.IdleTimeout = TimeSpan.FromHours(2);
+    opts.Cookie.HttpOnly = true;
+    opts.Cookie.IsEssential = true;
 });
 
 var app = builder.Build();
@@ -31,14 +34,14 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseSession();
 app.UseAuthorization();
 
 // app.MapStaticAssets();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
+    pattern: "{controller=Account}/{action=Login}/{id?}")
     .WithStaticAssets();
-
 
 app.Run();

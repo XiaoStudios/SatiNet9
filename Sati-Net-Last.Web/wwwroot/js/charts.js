@@ -7,6 +7,10 @@ let traderChart = null;
 let traderCandleSeries = null;
 let lastCandle = null;
 let signalRConnection = null;
+const getCurrentSelectedSymbol = () => {
+    const symbol = (window.currentSelectedSymbol || document.getElementById('traderSymbolDropdown')?.value || document.getElementById('userSymbolDropdown')?.value || '');
+    return String(symbol).trim();
+};
 
 /**
  * Dibuja el gráfico de historial para History MT
@@ -125,10 +129,15 @@ function drawHistoryChart(containerId, candles) {
  */
 function initSatiTrader() {
     const container = document.getElementById('traderChartContainer');
+    const selectedSymbol = getCurrentSelectedSymbol();
     
     if (!container) {
         console.error('traderChartContainer not found');
         return;
+    }
+
+    if (document.getElementById('traderSymbolDropdown')) {
+        document.getElementById('traderSymbolDropdown').value = selectedSymbol;
     }
 
     // Destruir gráfico anterior si existe
@@ -191,6 +200,13 @@ function initSatiTrader() {
     });
 
     signalRConnection.on("ReceiveMetaTraderData", (newData) => {
+        const selectedSymbol = getCurrentSelectedSymbol();
+        const incomingSymbol = (newData && (newData.SYMBOL || newData.symbol || newData.Symbol || newData.symbolStr)) || '';
+
+        if (!selectedSymbol || !incomingSymbol || incomingSymbol.toUpperCase() !== selectedSymbol.toUpperCase()) {
+            return;
+        }
+
         updateTraderChart(newData);
     });
 
@@ -202,22 +218,22 @@ function initSatiTrader() {
             console.error("SignalR connection error:", err);
         });
 
-    // Cargar historial inicial
-    fetch('https://localhost:5100/api/metatrader/getpricehistory', { 
-        method: 'POST',
+    // Cargar historial inicial del símbolo activo del usuario
+    fetch(`https://localhost:5100/api/metatrader/GetPriceHistory?symbol=${encodeURIComponent(selectedSymbol)}`, {
+        method: 'GET',
         headers: {
-            'Content-Type': 'application/json'
+            'Accept': 'application/json'
         }
     })
         .then(res => res.json())
         .then(data => {
             if (data && data.length > 0) {
                 const candles = data.map(d => ({
-                    time: getUnixTimeStampForTrader(d.timE_MTAPI || d.time),
-                    open: d.open,
-                    high: d.high,
-                    low: d.low,
-                    close: d.close
+                    time: getUnixTimeStampForTrader(d.timE_MTAPI || d.time || d.TIME),
+                    open: Number(d.open ?? d.OPEN ?? 0),
+                    high: Number(d.high ?? d.HIGH ?? 0),
+                    low: Number(d.low ?? d.LOW ?? 0),
+                    close: Number(d.close ?? d.CLOSE ?? 0)
                 }));
                 candles.sort((a, b) => a.time - b.time);
                 traderCandleSeries.setData(candles);

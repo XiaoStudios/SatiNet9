@@ -119,5 +119,16 @@ CREATE TABLE User_Symbols (
 /***********/
 -- Datos de prueba: usuario test para validar login Web
 /***********/
+USE sati_dev;
+
 INSERT INTO Admin_Users (Username, Email, PasswordHash, FullName, IsEnabled, IsAdmin)
 VALUES ('ivan', 'ivan@sati.dev', SHA2('Test2026!', 256), 'Ivan (Test Web)', 1, 0);
+
+INSERT INTO User_Symbols (UserId, SymbolStr, IsActive)
+VALUES (1, 'EURMXN', 1);
+
+INSERT INTO Admin_Users (Username, Email, PasswordHash, FullName, IsEnabled, IsAdmin)
+VALUES ('test2', 'test2@sati.dev', SHA2('Test2026!', 256), 'Usuario Test 2', 1, 0);
+
+INSERT INTO user_symbols (UserId, SymbolStr, IsActive)
+VALUES (LAST_INSERT_ID(), 'USDJPY', 1);

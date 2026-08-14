@@ -24,6 +24,8 @@ public partial class SatiDevContext : DbContext
 
     public virtual DbSet<Rate> Rates { get; set; }
 
+    public virtual DbSet<UserSymbol> UserSymbols { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)

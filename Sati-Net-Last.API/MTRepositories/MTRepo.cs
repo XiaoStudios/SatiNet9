@@ -100,7 +100,7 @@ public class MTRepo : IMTRepo
         return symbols.Where(x => x.TRADE_MODE != 0).Select(x => x.NAME).ToList();
     }
 
-    public List<Rates> GetPriceHistory()
+    public List<Rates> GetPriceHistory(string symbol)
     {
         var rates = new List<Rates>();
 
@@ -109,28 +109,20 @@ public class MTRepo : IMTRepo
             if (_terminalRepo == null)
                 return rates;
 
+            if (string.IsNullOrWhiteSpace(symbol))
+                throw new ArgumentException("El símbolo es obligatorio.", nameof(symbol));
+
             var timeFrameHistory = (TimeFrame)Enum.Parse(typeof(TimeFrame), "PERIOD_M1");
+            var startDate = DateTime.UtcNow.Date;
+            var endDate = DateTime.UtcNow.AddHours(2);
 
-            // rates = _terminal.PriceHistory
-            // (
-            //     "EURUSD",
-            //     timeFrameHistory,
-            //     DateTime.Now.AddHours(-48).AddMinutes(-TimeSpanFromTF(timeFrameHistory).TotalMinutes * 30),
-            //     DateTime.Now.AddDays(1)
-            // );
+            rates = _terminalRepo.GetPriceHistory(symbol, timeFrameHistory, startDate, endDate);
 
-            var startDate = DateTime.UtcNow.Date; // medianoche UTC de hoy
-            var endDate = DateTime.UtcNow.AddHours(2);        // ahora UTC mas 2 horas de metatrader (hora europa utc + 2)
-                                                              //MetaTrader 5 usa la hora del servidor de trading (broker), que normalmente es hora de Europa del Este (EET/UTC+2) o la zona horaria del broker, no la hora local de tu PC ni UTC
-
-            rates = new List<Rates>();
-            rates = _terminalRepo.GetPriceHistory("EURUSD", timeFrameHistory, startDate, endDate);
-
-            _logger.LogInformation($"****Price history retrieved: {rates.Count} records. with {startDate} {endDate}");
+            _logger.LogInformation($"****Price history retrieved for {symbol}: {rates.Count} records. with {startDate} {endDate}");
         }
         catch (Exception ex)
         {
-            _logger.LogError("Error retrieving price history: " + ex.Message);
+            _logger.LogError(ex, "Error retrieving price history for symbol {Symbol}", symbol);
         }
 
         return rates;

@@ -11,34 +11,54 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="@Url.Action("Index", "Home")">Sati Net Last</a>
+            <a class="navbar-brand" href="@Url.Action("Index", "SatiTrader")"><i class="fas fa-chart-line"></i> Sati Net Last</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="@Url.Action("Index", "Home")">Home</a>
+                        <a class="nav-link active" href="@Url.Action("Index", "SatiTrader")"><i class="fas fa-chart-candle"></i> Sati Trader</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="@Url.Action("Index", "SatiTrader")">Sati Trader</a>
+                        <a class="nav-link" href="@Url.Action("Index", "HistoryMT")"><i class="fas fa-history"></i> History MT</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="@Url.Action("Index", "Excel")">Excel Page</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="@Url.Action("Index", "HistoryMT")">History MT</a>
+                        <a class="nav-link" href="@Url.Action("Index", "Excel")"><i class="fas fa-file-excel"></i> Excel</a>
                     </li>
                 </ul>
+
+                @{
+                    var sessionUser = Context.Session.GetString("FullName")
+                                ?? Context.Session.GetString("Username");
+                }
+
+                @if (!string.IsNullOrWhiteSpace(sessionUser))
+                {
+                    <div class="d-flex align-items-center gap-2">
+                        <span style="color:rgba(255,255,255,.75); font-size:13px;">
+                            @sessionUser
+                        </span>
+
+                        <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <button type="submit"
+                                    class="btn btn-sm"
+                                    style="border:1px solid rgba(255,255,255,.35); color:#fff; background:transparent;">
+                                Cerrar Sesión
+                            </button>
+                        </form>
+                    </div>
+                }
             </div>
         </div>
     </nav>
     
-    <main role="main" class="container-fluid mt-4">
+    <main role="main" class="container-fluid" style="padding: 0; margin: 0;">
         @RenderBody()
     </main>
 
-    <footer class="footer mt-auto py-3 bg-dark text-white">
+    <footer class="footer mt-auto py-2 bg-dark text-white" style="font-size: 0.9rem;">
         <div class="container text-center">
             <span>&copy; 2026 - Sati Net Last - Trading Platform</span>
         </div>
