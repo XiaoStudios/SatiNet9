@@ -150,6 +150,39 @@
         font-size: 1.1rem;
     }
 
+    .chart-mode-switch {
+        display: inline-flex;
+        gap: 0.25rem;
+        padding: 0.2rem;
+        background: #f1f3f5;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+    }
+
+    .chart-mode-button {
+        border: 0;
+        background: transparent;
+        color: #6c757d;
+        padding: 0.35rem 0.65rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .chart-mode-button:hover,
+    .chart-mode-button.active {
+        background: #007bff;
+        color: white;
+    }
+
+    .wma-label {
+        color: #f5b942;
+        font-size: 0.75rem;
+        font-weight: 700;
+        margin-left: 0.5rem;
+    }
+
     .chart-title-symbol {
         color: #007bff;
         font-weight: 700;
@@ -427,6 +460,19 @@
                 <span class="dot"></span>
                 EN VIVO
             </div>
+            <div class="chart-mode-switch" aria-label="Tipo de gráfico">
+                <button type="button" id="candlesModeBtn" class="chart-mode-button active" onclick="ChartsJS.ToggleTraderCandles()" title="Velas japonesas">
+                    <i class="fas fa-chart-column"></i> Velas
+                </button>
+                <button type="button" id="lineModeBtn" class="chart-mode-button" onclick="ChartsJS.ToggleTraderPriceLine()" title="Gráfico lineal">
+                    <i class="fas fa-chart-line"></i> Línea
+                </button>
+            </div>
+            <span class="wma-label">WMA</span>
+            <div class="chart-mode-switch" aria-label="Periodo del promedio móvil ponderado">
+                <button type="button" id="wma20Btn" class="chart-mode-button active" onclick="ChartsJS.ToggleTraderWma20()" title="Promedio móvil ponderado de 20 periodos">20</button>
+                <button type="button" id="wma50Btn" class="chart-mode-button" onclick="ChartsJS.ToggleTraderWma50()" title="Promedio móvil ponderado de 50 periodos">50</button>
+            </div>
         </div>
 
         @if (!string.IsNullOrWhiteSpace(noSymbolsMessage))
@@ -455,7 +501,7 @@
                     EN VIVO
                 </div>
                 <div id="traderChartContainer"></div>
-                <button id="returnToLiveBtn" onclick="returnToLiveChart()">
+                <button id="returnToLiveBtn" onclick="ChartsJS.ReturnToLiveChart()">
                     <i class="fas fa-arrow-right"></i> Volver al Live
                 </button>
             </div>
@@ -529,7 +575,7 @@
                         }
 
                         if (payload.selectedSymbol) {
-                            initSatiTrader();
+                            ChartsJS.InitSatiTrader();
                         }
                     })
                     .catch(err => {

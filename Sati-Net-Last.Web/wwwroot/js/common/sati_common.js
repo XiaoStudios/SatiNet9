@@ -91,10 +91,8 @@ var CommonSatiUI = {
     },
     GetOriginalTimestamp: (timeStr) => {
         /**
-         * Convierte fecha a timestamp Unix sin ajustes de zona horaria.
-         * Interpreta la fecha tal cual como viene del servidor.
-         * Usar para: datos históricos, gráficos del pasado, tablas de datos.
-         * Formato esperado: "yyyy.MM.dd HH:mm:ss" o "yyyy-MM-dd HH:mm:ss"
+         * Convierte la hora del broker sin reescalar la zona del navegador.
+         * La referencia del tiempo debe ser la de MetaTrader, no la del cliente.
          */
         if (!timeStr) {
             console.warn('GetOriginalTimestamp: timeStr es null o undefined');
@@ -102,67 +100,33 @@ var CommonSatiUI = {
         }
 
         try {
-            let dateStr = timeStr;
-            
-            // Normalizar formato: "yyyy.MM.dd HH:mm:ss" → "yyyy-MM-ddTHH:mm:ss"
-            if (typeof dateStr === "string") {
-                dateStr = dateStr.replace(/\./g, "-").replace(" ", "T");
+            let dateStr = String(timeStr).trim();
+            if (!dateStr) return 0;
+
+            if (dateStr.includes(".")) {
+                const [datePart, timePart = "00:00:00"] = dateStr.split(" ");
+                const normalizedDate = datePart.replace(/\./g, "-");
+                const normalizedTime = timePart.split(".")[0];
+                dateStr = `${normalizedDate}T${normalizedTime}`;
             }
-            
-            // Parsear componentes manualmente para evitar conversión de zona horaria
+
             const parts = dateStr.split("T");
             const dateParts = parts[0].split("-");
             const timeParts = parts[1] ? parts[1].split(":") : ["00", "00", "00"];
-            
-            // Crear fecha UTC directamente (sin ajuste de zona horaria local)
+
             const timestamp = Date.UTC(
-                parseInt(dateParts[0]),     // año
-                parseInt(dateParts[1]) - 1, // mes (0-indexed)
-                parseInt(dateParts[2]),     // día
-                parseInt(timeParts[0]),     // hora
-                parseInt(timeParts[1]),     // minuto
-                parseInt(timeParts[2])      // segundo
+                parseInt(dateParts[0]),
+                parseInt(dateParts[1]) - 1,
+                parseInt(dateParts[2]),
+                parseInt(timeParts[0]),
+                parseInt(timeParts[1]),
+                parseInt(timeParts[2].split('.')[0])
             ) / 1000;
-            
+
             return timestamp;
         } catch (error) {
             console.error('Error en GetOriginalTimestamp:', error, timeStr);
             return 0;
         }
-    },
-    GetRealtimeTimestamp: (timeStr) => {
-        /**
-         * Convierte fecha a timestamp Unix para datos en tiempo real.
-         * Aplica conversión de zona horaria del navegador.
-         * Usar para: datos en vivo, feeds en tiempo real, operaciones actuales.
-         * Formato esperado: "yyyy.MM.dd HH:mm:ss" o "yyyy-MM-dd HH:mm:ss"
-         */
-        if (!timeStr) {
-            console.warn('GetRealtimeTimestamp: timeStr es null o undefined');
-            return 0;
-        }
-
-        try {
-            let dateStr = timeStr;
-            
-            // Normalizar formato
-            if (typeof dateStr === "string" && dateStr.includes(".")) {
-                dateStr = dateStr.replace(/\./g, "-").replace(" ", "T");
-            }
-            
-            // Convertir con zona horaria local del navegador
-            const timestamp = Math.floor(new Date(dateStr).getTime() / 1000);
-            return timestamp;
-        } catch (error) {
-            console.error('Error en GetRealtimeTimestamp:', error, timeStr);
-            return 0;
-        }
-    },
-    GetUnixTimeStamp: (timeStr) => {
-        /**
-         * @deprecated Usar GetOriginalTimestamp o GetRealtimeTimestamp
-         */
-        console.warn('GetUnixTimeStamp está deprecado. Usar GetOriginalTimestamp o GetRealtimeTimestamp');
-        return CommonSatiUI.GetRealtimeTimestamp(timeStr);
     }
 }

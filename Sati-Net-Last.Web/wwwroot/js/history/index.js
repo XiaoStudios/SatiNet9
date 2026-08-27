@@ -125,12 +125,10 @@ var HistoryJS =
                         low: parseFloat(d.low),
                         close: parseFloat(d.close)
                     }));
-                    drawHistoryChart('historyChartContainer', candles);
-                    
+
+                    ChartsJS.DrawHistoryChart('historyChartContainer', candles);                    
                     HistoryJS.RenderHybridDataTable(data, enableAlgorithm);
-                    
-                    // Guardar estado del algoritmo
-                    HistoryJS.lastLoadedWithAlgorithm = enableAlgorithm;
+                    HistoryJS.lastLoadedWithAlgorithm = enableAlgorithm;// Guardar estado del algoritmo
                     
                     // Mostrar tabla y botón de Excel
                     $('#dataTableContainer').show();
@@ -159,7 +157,7 @@ var HistoryJS =
         CommonSatiUI.InitHeadersDataTable('#priceDataTableHeader', HistoryJS.ReturnTableHeaders(withAlgorithm));
         
         const dataTableOptions = {
-            order: [[1, 'asc']],
+            order: [[0, 'asc']],
             pageLength: 20,
             scrollX: false,
             autoWidth: false,
@@ -174,14 +172,13 @@ var HistoryJS =
         
         if (!withAlgorithm) {
             dataTableOptions.columnDefs = [
-                { width: '5%', targets: 0 },
-                { width: '15%', targets: 1 },
+                { width: '15%', targets: 0 },
+                { width: '10%', targets: 1 },
                 { width: '10%', targets: 2 },
                 { width: '10%', targets: 3 },
                 { width: '10%', targets: 4 },
-                { width: '10%', targets: 5 },
-                { width: '20%', targets: 6 },
-                { width: '20%', targets: 7 }
+                { width: '20%', targets: 5 },
+                { width: '20%', targets: 6 }
             ];
         }
         
@@ -197,7 +194,6 @@ var HistoryJS =
         ? 
             `<tr >
                 <!-- Columnas básicas -->
-                <th rowspan="2" style="padding: 10px; text-align: center; width: 50px;">#</th>
                 <th rowspan="2" style="padding: 10px; text-align: left; width: 130px;">Time</th>
                 <!--
                 <th rowspan="2" style="padding: 10px; text-align: right;">Open</th>
@@ -243,7 +239,6 @@ var HistoryJS =
             `
                 <!-- ✅ Primera fila: Encabezados agrupados -->
                 <tr>
-                    <th rowspan="2" style="padding: 10px; text-align: center; vertical-align: middle;">#</th>
                     <th rowspan="2" style="padding: 10px; text-align: left; vertical-align: middle;">Time</th>
                     <th rowspan="2" style="padding: 10px; text-align: right; vertical-align: middle;">Open</th>
                     <th rowspan="2" style="padding: 10px; text-align: right; vertical-align: middle;">High</th>
@@ -260,12 +255,12 @@ var HistoryJS =
     },
     ReturnTableColumns: (withAlgorithm) => {
         let tableColumns = [
-            { data: null, orderable: false, render: (d, t, r, meta) => meta.row + 1 },
             { 
                 data: 'time',  // ✅ TIME original del broker (sin ajustes)
-                render: (data, type, row) => {
-                    // Hora correcta del histórico sin ajustes de zona horaria
-                    return data || 'N/A';
+                render: (data, type) => {
+                    if (!data) return 'N/A';
+                    if (type === 'sort' || type === 'type') return data;
+                    return HistoryJS.FormatHistoryTime(data);
                 }
             },
             { data: 'open', render: $.fn.dataTable.render.number(',', '.', 5) },
@@ -327,6 +322,17 @@ var HistoryJS =
         }
 
         return tableColumns;
+    },
+    FormatHistoryTime: (value) => {
+        const text = String(value ?? '').trim();
+        if (!text) return 'N/A';
+
+        // Los datos de MTAPI pueden venir como yyyy.MM.dd HH:mm:ss,
+        // yyyy-MM-dd HH:mm:ss o como ISO yyyy-MM-ddTHH:mm:ss.
+        const match = text.match(/[T ](\d{2}:\d{2}:\d{2})/);
+        if (match) return match[1];
+
+        return text;
     },
     DownloadExcel: () => {
         const symbol = $('#symbolDropdown').val();

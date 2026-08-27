@@ -9,10 +9,10 @@ namespace MTsocketAPI.MT5
 {
     public class AccountStatus
     {
-        public string COMPANY { get; set; }
-        public string CURRENCY { get; set; }
-        public string NAME { get; set; }
-        public string SERVER { get; set; }
+        public string COMPANY { get; set; } = string.Empty;
+        public string CURRENCY { get; set; } = string.Empty;
+        public string NAME { get; set; } = string.Empty;
+        public string SERVER { get; set; } = string.Empty;
         public int LOGIN { get; set; }
         public int TRADE_MODE { get; set; }
         public int LEVERAGE { get; set; }

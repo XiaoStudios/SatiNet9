@@ -10,8 +10,8 @@ namespace MTsocketAPI.MT5
     public class Asset
     {
         //public string MSG { get; set; }
-        public string NAME { get; set; }
-        public string TIME { get; set; }
+        public string NAME { get; set; } = string.Empty;
+        public string TIME { get; set; } = string.Empty;
         public int DIGITS { get; set; }
         public int SPREAD_FLOAT { get; set; }
         public int SPREAD { get; set; }
@@ -38,13 +38,13 @@ namespace MTsocketAPI.MT5
         public double SWAP_SHORT { get; set; }
         public double MARGIN_INITIAL { get; set; }
         public double MARGIN_MAINTENANCE { get; set; }
-        public string CURRENCY_BASE { get; set; }
-        public string CURRENCY_PROFIT { get; set; }
-        public string CURRENCY_MARGIN { get; set; }
-        public string DESCRIPTION { get; set; }
-        public string PATH { get; set; }
-		public List<Dictionary<string, string>> SESSION_QUOTE { get; set; }
-		public List<Dictionary<string, string>> SESSION_TRADE { get; set; }
+        public string CURRENCY_BASE { get; set; } = string.Empty;
+        public string CURRENCY_PROFIT { get; set; } = string.Empty;
+        public string CURRENCY_MARGIN { get; set; } = string.Empty;
+        public string DESCRIPTION { get; set; } = string.Empty;
+        public string PATH { get; set; } = string.Empty;
+		public List<Dictionary<string, string>>? SESSION_QUOTE { get; set; }
+		public List<Dictionary<string, string>>? SESSION_TRADE { get; set; }
 
 		public override string ToString()
         {

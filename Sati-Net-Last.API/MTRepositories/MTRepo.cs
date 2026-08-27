@@ -20,7 +20,7 @@ public class MTRepo : IMTRepo
     private readonly SemaphoreSlim _connectLock = new(1, 1);
     private readonly object _trackingLock = new();
     private readonly HashSet<string> _trackedSymbols = new(StringComparer.OrdinalIgnoreCase);
-    public TerminalRepo _terminalRepo;
+    private readonly TerminalRepo _terminalRepo;
 
     public MTRepo
     (
@@ -182,6 +182,28 @@ public class MTRepo : IMTRepo
         return symbols.Where(x => x.TRADE_MODE != 0).Select(x => x.NAME).ToList();
     }
 
+    private DateTime? TryParseBrokerTimestamp(string? timeValue)
+    {
+        if (string.IsNullOrWhiteSpace(timeValue))
+            return null;
+
+        var formats = new[]
+        {
+            "yyyy.MM.dd HH:mm:ss",
+            "yyyy.MM.dd HH:mm:ss.fff",
+            "yyyy-MM-dd HH:mm:ss",
+            "yyyy-MM-dd HH:mm:ss.fff"
+        };
+
+        if (DateTime.TryParseExact(timeValue.Trim(), formats, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var parsed))
+            return parsed;
+
+        if (DateTime.TryParse(timeValue, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out parsed))
+            return parsed;
+
+        return null;
+    }
+
     public List<Rates> GetPriceHistory(string symbol)
     {
         var rates = new List<Rates>();
@@ -195,9 +217,16 @@ public class MTRepo : IMTRepo
                 throw new ArgumentException("El símbolo es obligatorio.", nameof(symbol));
 
             var timeFrameHistory = (TimeFrame)Enum.Parse(typeof(TimeFrame), "PERIOD_M1");
-            // Use a rolling recent window to avoid empty datasets caused by UTC/day-boundary mismatches.
-            var endDate = DateTime.Now;
-            var startDate = endDate.AddHours(-12);
+            var brokerQuote = _terminalRepo.GetQuote(symbol);
+            var brokerTimestamp = TryParseBrokerTimestamp(brokerQuote?.TIME);
+            if (!brokerTimestamp.HasValue)
+            {
+                _logger.LogWarning("MetaTrader no devolvió una hora válida para {Symbol}; no se solicitará histórico.", symbol);
+                return rates;
+            }
+
+            DateTime endDate = brokerTimestamp.Value;
+            DateTime startDate = endDate.AddHours(-12);
 
             rates = _terminalRepo.GetPriceHistory(symbol, timeFrameHistory, startDate, endDate);
 
@@ -653,7 +682,7 @@ public class MTRepo : IMTRepo
                 foreach (var rate in rates)
                 {
                     ws.Cells[row, 1].Value = rowNumber;
-                    ws.Cells[row, 2].Value = rate.TIME;
+                    ws.Cells[row, 2].Value = FormatHistoryTime(rate.TIME);
                     ws.Cells[row, 3].Value = rate.OPEN;
                     ws.Cells[row, 4].Value = rate.HIGH;
                     ws.Cells[row, 5].Value = rate.LOW;
@@ -673,6 +702,7 @@ public class MTRepo : IMTRepo
                     ws.Cells[row, 19].Value = rate.Signal;
 
                     // Formatos numéricos
+                    ws.Cells[row, 2].Style.Numberformat.Format = "hh:mm:ss";
                     ws.Cells[row, 3, row, 6].Style.Numberformat.Format = "0.00000"; // OHLC
                     ws.Cells[row, 7].Style.Numberformat.Format = "0.00000"; // WAM
                     ws.Cells[row, 8].Style.Numberformat.Format = "0.0000\"%\""; // %
@@ -721,6 +751,9 @@ public class MTRepo : IMTRepo
                 }
 
                 ws.Cells[ws.Dimension.Address].AutoFitColumns();
+                ws.Column(3).Hidden = true; // OPEN
+                ws.Column(4).Hidden = true; // HIGH
+                ws.Column(5).Hidden = true; // LOW
                 _logger.LogInformation($"EXCEL WITH ALGORITHM: Generado con {rates.Count} registros y 19 columnas");
 
                 return package.GetAsByteArray();
@@ -740,33 +773,20 @@ public class MTRepo : IMTRepo
 
     private static string NormalizeSymbol(string symbol) => symbol.Trim().ToUpperInvariant();
 
-    // Helper method to convert TimeFrame to TimeSpan
-    private TimeSpan TimeSpanFromTF(TimeFrame tf)
+    private static string FormatHistoryTime(string? value)
     {
-        return tf switch
-        {
-            TimeFrame.PERIOD_M1 => TimeSpan.FromMinutes(1),
-            TimeFrame.PERIOD_M2 => TimeSpan.FromMinutes(2),
-            TimeFrame.PERIOD_M3 => TimeSpan.FromMinutes(3),
-            TimeFrame.PERIOD_M4 => TimeSpan.FromMinutes(4),
-            TimeFrame.PERIOD_M5 => TimeSpan.FromMinutes(5),
-            TimeFrame.PERIOD_M6 => TimeSpan.FromMinutes(6),
-            TimeFrame.PERIOD_M10 => TimeSpan.FromMinutes(10),
-            TimeFrame.PERIOD_M15 => TimeSpan.FromMinutes(15),
-            TimeFrame.PERIOD_M20 => TimeSpan.FromMinutes(20),
-            TimeFrame.PERIOD_M30 => TimeSpan.FromMinutes(30),
-            TimeFrame.PERIOD_H1 => TimeSpan.FromHours(1),
-            TimeFrame.PERIOD_H2 => TimeSpan.FromHours(2),
-            TimeFrame.PERIOD_H3 => TimeSpan.FromHours(3),
-            TimeFrame.PERIOD_H4 => TimeSpan.FromHours(4),
-            TimeFrame.PERIOD_H6 => TimeSpan.FromHours(6),
-            TimeFrame.PERIOD_H8 => TimeSpan.FromHours(8),
-            TimeFrame.PERIOD_H12 => TimeSpan.FromHours(12),
-            TimeFrame.PERIOD_D1 => TimeSpan.FromDays(1),
-            TimeFrame.PERIOD_W1 => TimeSpan.FromDays(7),
-            TimeFrame.PERIOD_MN1 => TimeSpan.FromDays(30),
-            _ => TimeSpan.FromMinutes(1)
-        };
+        if (string.IsNullOrWhiteSpace(value))
+            return string.Empty;
+
+        var separatorIndex = value.IndexOf(' ');
+        if (separatorIndex >= 0 && separatorIndex + 1 < value.Length)
+            return value[(separatorIndex + 1)..];
+
+        var isoSeparatorIndex = value.IndexOf('T');
+        if (isoSeparatorIndex >= 0 && isoSeparatorIndex + 1 < value.Length)
+            return value[(isoSeparatorIndex + 1)..];
+
+        return value;
     }
 
     public void Mt5_OnPrice(object? sender, Quote e)
@@ -775,7 +795,9 @@ public class MTRepo : IMTRepo
             return;
 
         var groupName = MetaTraderHub.BuildSymbolGroup(e.SYMBOL);
-        _mtHubContext.Clients.Group(groupName).SendAsync("ReceiveMetaTraderData", e).Wait();
+        _ = _mtHubContext.Clients
+            .Group(groupName)
+            .SendAsync("ReceiveMetaTraderData", e);
     }
 
     // Por qué redondear en el backend:

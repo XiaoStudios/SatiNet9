@@ -10,11 +10,11 @@ namespace MTsocketAPI.MT5
 {
     public class Quote
     {
-        public string SYMBOL { get; set; }
+        public string SYMBOL { get; set; } = string.Empty;
         public double ASK { get; set; }
         public double BID { get; set; }
         public int FLAGS { get; set; }
-        public string TIME { get; set; }
+        public string TIME { get; set; } = string.Empty;
         public int VOLUME { get; set; }
         public override string ToString()
         {
@@ -25,9 +25,9 @@ namespace MTsocketAPI.MT5
     public class OHLC_Msg
     {
         //public string MSG { get; set; }
-        public string SYMBOL { get; set; }
-        public string PERIOD { get; set; }
-        public List<Rates> OHLC { get; set; }
+        public string SYMBOL { get; set; } = string.Empty;
+        public string PERIOD { get; set; } = string.Empty;
+        public List<Rates>? OHLC { get; set; }
         public override string ToString()
         {
             return JsonConvert.SerializeObject(this);
@@ -38,7 +38,7 @@ namespace MTsocketAPI.MT5
 	{
         //public string MSG { get; set; }
         [Required]
-		public string SYMBOL { get; set; }
+		public string SYMBOL { get; set; } = string.Empty;
 		[Required]
 		public TimeFrame TIMEFRAME { get; set; }
 		public int? DEPTH { get; set; }

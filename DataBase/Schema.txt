@@ -131,4 +131,4 @@ INSERT INTO Admin_Users (Username, Email, PasswordHash, FullName, IsEnabled, IsA
 VALUES ('test2', 'test2@sati.dev', SHA2('Test2026!', 256), 'Usuario Test 2', 1, 0);
 
 INSERT INTO user_symbols (UserId, SymbolStr, IsActive)
-VALUES (LAST_INSERT_ID(), 'USDJPY', 1);
+VALUES (2, 'USDJPY', 1);

@@ -10,12 +10,12 @@ namespace MTsocketAPI.MT5
     public class TerminalInfo
     {
         //public string MSG { get; set; }
-        public string LANGUAGE { get; set; }
-        public string COMPANY { get; set; }
-        public string NAME { get; set; }
-        public string PATH { get; set; }
-        public string DATA_PATH { get; set; }
-        public string COMMONDATA_PATH { get; set; }
+        public string LANGUAGE { get; set; } = string.Empty;
+        public string COMPANY { get; set; } = string.Empty;
+        public string NAME { get; set; } = string.Empty;
+        public string PATH { get; set; } = string.Empty;
+        public string DATA_PATH { get; set; } = string.Empty;
+        public string COMMONDATA_PATH { get; set; } = string.Empty;
         public int BUILD { get; set; }
         public int COMMUNITY_ACCOUNT { get; set; }
         public int COMMUNITY_CONNECTION { get; set; }

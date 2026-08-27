@@ -27,5 +27,7 @@ public class TerminalRepo
     
     public void TrackPrices(List<string> symbols) => _terminal.TrackPrices(symbols);
 
+    public Quote GetQuote(string symbol) => _terminal.GetQuote(symbol);
+
     public List<Rates> GetPriceHistory(string symbol, TimeFrame timeFrame, DateTime startDate, DateTime endDate) => _terminal.PriceHistory(symbol, timeFrame, startDate, endDate);
 }
