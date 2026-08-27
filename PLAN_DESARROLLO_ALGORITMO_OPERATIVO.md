@@ -17,7 +17,7 @@
 
 ---
 
-## 📐 Arquitectura Propuesta
+##  Arquitectura Propuesta
 
 ### **🏗️ Arquitectura Centralizada (Backend Único + N Frontends)**
 
@@ -2278,6 +2278,11 @@ public void EvaluarSenal_ConCuatroCondiciones_ShouldReturnCOMPRA()
 3. **Exportación avanzada**
    - PDF con gráficos
    - CSV con todos los datos
+    - Excel con gráfica de precio vs tiempo y marcadores de señales:
+      - punto verde para `COMPRA`
+      - punto rojo para `VENTA`
+      - punto blanco/vacío o sin marcador para `NINGUNA`
+      - la gráfica debe simular visualmente dónde aparecen las compras y ventas sobre la línea de precios
 
 ---
 
@@ -2453,8 +2458,27 @@ Estado final:                           Código limpio, escalable, mantenible
 
 ## 🆕 ACTUALIZACIÓN: PANEL DE ADMINISTRACIÓN API + CONTROL DE SÍMBOLOS POR USUARIO
 
-**Fecha de actualización:** 29 de Julio, 2026  
+**Fecha de actualización:** 31 de Julio, 2026  
 **Objetivo:** Incorporar una capa de administración para MetaTrader/API y gestión de acceso de usuarios al frontend Trader.
+
+---
+
+### 8.0 División de Trabajo — Gerardo / Ivan
+
+| Desarrollador | Responsabilidad |
+|---|---|
+| **Gerardo** | `Sati-Net-Last.Admin` — Panel de administración (MTAPI, usuarios, asignación de divisas, y en Fase 2: Cuentas de Trabajo/turnos) |
+| **Ivan** | `Sati-Net-Last.Web` — Panel del trader (login, tiempo real, filtros por símbolo, validación multi-usuario con SignalR) |
+
+**Fase 1 (en curso):**
+- Admin panel: funcional hasta asignación de divisa por usuario (preview aprobado, implementación a cargo de Gerardo).
+- Web panel: login → tiempo real → filtro por símbolo → validación 2 usuarios.
+
+**Fase 2 (futura — Gerardo):**
+- Cuentas de Trabajo (`work_slots`) y cambios de turno (`shift_change_requests`).
+- No aplica en el código actual hasta que se acuerde iniciar.
+
+---
 
 ### 8.1 Nuevo Proyecto Web de Administración
 
@@ -2479,48 +2503,137 @@ Estado final:                           Código limpio, escalable, mantenible
 - Endpoints de administración (obtener/guardar configuración, connect/disconnect, health/status)
 - Vista de administración con formularios y acciones de control
 
-### 8.3 Módulo 2 - Administrador de Usuarios
+### 8.3 Módulo 2 - Administrador de Usuarios y Asignación de Divisas (Fase 1)
 
-**Alcance funcional:**
-- Crear usuarios con acceso a `Sati-Net-Last.Web`
+**Alcance Fase 1 (Gerardo — Admin panel):**
+- Crear y administrar usuarios (traders) con acceso a `Sati-Net-Last.Web`
 - Habilitar/Deshabilitar usuarios
-- Asignar símbolos permitidos por usuario (ejemplo: EURUSD, GBPUSD, XAUUSD)
-- Editar asignaciones de símbolos por usuario
+- Asignar una o varias divisas/símbolos a un usuario desde el panel admin
+- **Regla:** Una divisa solo puede pertenecer a un usuario (UNIQUE en DB); un usuario puede tener múltiples divisas
+- No se implementan Cuentas de Trabajo ni cambios de turno en Fase 1
 
-**Entregables técnicos sugeridos:**
-- Tabla de usuarios de acceso web
-- Tabla relacional usuario-símbolo
-- Endpoints CRUD de usuarios y asignaciones
-- Vista para gestión de usuarios y permisos de símbolos
+**Tablas DB Fase 1:**
+- `Admin_Users`: usuarios del sistema (username, email, password hash, habilitado/deshabilitado)
+- `User_Symbols`: relación usuario→divisa (UNIQUE en `SymbolStr` — 1 divisa = 1 usuario)
 
-### 8.4 Cambio Obligatorio en Sati-Net-Last.Web (Consumo de Símbolos)
+**Tablas DB Fase 2 (Gerardo — futura):**
+- `Work_Slots`: cuentas de trabajo con símbolo fijo y usuario activo por turno
+- `Shift_Change_Requests`: solicitudes de cambio de turno entre usuarios
 
-**Regla nueva:**
-Cuando el usuario inicie sesión en `Sati-Net-Last.Web`, solo debe ver y operar con los símbolos asignados desde el panel de administración.
+### 8.3.2 Flujo de Cambio de Turno — FASE 2 (Gerardo — futuro)
 
-**No permitido a partir de esta actualización:**
-- Cargar todos los símbolos disponibles directamente desde MTAPI para cualquier usuario.
+> **Nota:** Esta sección queda documentada para implementación futura en Fase 2.  
+> No aplica en el código actual.
 
-**Implementación propuesta:**
-- En login, obtener perfil del usuario y sus símbolos permitidos
-- Reemplazar endpoint/listado global de símbolos por endpoint filtrado por usuario autenticado
-- Validar en backend que un usuario no pueda consultar símbolos no asignados
-- Aplicar validación tanto en vistas como en endpoints REST
+**Flujo planeado:**
+1. Usuario A activo en puesto "EURMXN" → trabaja con ese símbolo en Web.
+2. Usuario B solicita cambio de turno → se crea `shift_change_requests` en estado `PENDING`.
+3. Usuario A recibe notificación (badge/alerta en Web).
+4. Usuario A confirma cuando esté listo → `work_slots.CurrentUserId` pasa a Usuario B.
+5. Mientras no se confirme, Usuario A sigue activo sin interrupción (no hay cruce).
 
-### 8.5 Plan de Ejecución (Nuevo Bloque)
+### 8.3.1 Decisión de Base de Datos (Histórico MTAPI)
 
-1. Diseñar modelo de datos para configuración MTAPI y permisos de símbolos por usuario.
-2. Crear endpoints backend de administración (MTAPI + usuarios + asignaciones).
-3. Implementar autenticación/autorización para panel Admin.
-4. Construir vistas del panel Admin (Login, MTAPI Admin, Usuarios Admin).
-5. Integrar filtro de símbolos por usuario en `Sati-Net-Last.Web`.
-6. Validar seguridad: bloqueo de acceso a símbolos no autorizados.
-7. Realizar pruebas de integración entre Admin, API y Web.
+**Decisión aprobada:** Mantener la tabla histórica existente `Rates` como fuente de histórico MTAPI.
 
-### 8.6 Criterios de Aceptación
+**Motivo:** Ya cubre la persistencia de velas OHLC y evita duplicar almacenamiento.
 
-- El proyecto `Sati-Net-Last.Admin` compila y ejecuta desde la solución.
-- El administrador puede configurar conexión MTAPI y controlar connect/disconnect.
-- El administrador puede crear, habilitar/deshabilitar usuarios y asignar símbolos.
-- Un usuario de `Sati-Net-Last.Web` solo visualiza símbolos asignados.
-- El backend rechaza consultas de símbolos no autorizados para el usuario.
+**Ajustes mínimos requeridos en DB para rendimiento:**
+- Agregar índice compuesto por símbolo y tiempo para consultas de histórico.
+- Evaluar índice por fecha/hora solo si esas columnas se usan en filtros reales de producción.
+
+**Índices recomendados (mínimos):**
+- `INDEX idx_rates_symbol_time (SymbolStr, TIME)`
+- `INDEX idx_rates_fecha_hora (FECHA, HORA)` *(opcional según uso real)*
+
+**Nota técnica:** Sin índice, las consultas históricas hacen recorrido completo de tabla (full scan) y degradan al crecer el volumen de datos.
+
+### 8.4 Web: Login + Filtro de Símbolo por Usuario (Ivan)
+
+**Regla Fase 1:**
+- El usuario de `Sati-Net-Last.Web` inicia sesión con su usuario/contraseña.
+- El backend valida contra `Admin_Users` (habilitado=1).
+- Al estar autenticado, el Web consulta `User_Symbols` para cargar las divisas asignadas a ese usuario.
+- El usuario puede seleccionar cualquier divisa de las que tiene asignadas.
+- Dos usuarios no pueden tener la misma divisa (UNIQUE en `User_Symbols.SymbolStr`).
+- El backend filtra los datos de MTAPI por el símbolo seleccionado del usuario.
+
+**Lo que NO aplica en Fase 1:**
+- Sin Cuentas de Trabajo ni turnos.
+- Sin validación de "usuario activo por puesto".
+- Un usuario con divisas asignadas puede acceder cuando quiera (sin turno obligatorio).
+
+### 8.5 Roadmap Ivan — Sati-Net-Last.Web (Paso a Paso)
+
+> **Metodología:** Ivan revisa y aplica cada cambio manualmente para aprender el flujo. Los cambios se presentan con código completo en C#, JS y Razor.
+
+#### Paso 1 — Login de usuario en Web *(preview aprobado)*
+- [ ] Crear `AccountController` con acción `Login` (GET + POST)
+- [ ] Crear vista `Login.cshtml` con el diseño del preview (`preview_web_login.html`)
+- [ ] POST valida usuario/contraseña contra `Admin_Users` en DB (query con hash SHA256)
+- [ ] Si válido: guardar usuario en `Session` / `HttpContext` → redirigir a Home
+- [ ] Si inválido: mostrar mensaje de error en vista
+- [ ] Ajustar `_Layout.cshtml` para mostrar nombre de usuario y botón "Cerrar Sesión" cuando hay sesión activa
+- [ ] Agregar `[Authorize]` a los controladores que requieren sesión activa
+
+**Validación:** Ingresar con usuario `ivan` / `Test2026!` (del Schema INSERT) → entra al Home.
+
+---
+
+#### Paso 2 — Datos en tiempo real en Sati Trader (SignalR) *(siguiente a implementar)*
+- [ ] Confirmar que el Hub `MetaTraderHub.cs` existe y recibe datos del socket MT5
+- [ ] Revisar qué datos ya llegan desde `MTsocketAPI` y qué formato tienen
+- [ ] Conectar la vista `SatiTrader/Index.cshtml` al Hub con SignalR JS
+- [ ] Al recibir tick: actualizar tabla de últimos ticks en pantalla
+- [ ] Conectar con lightweight-charts para renderizar velas en tiempo real
+
+**Validación:** Abrir la página y ver que los datos de MT5 llegan y se muestran.
+
+---
+
+#### Paso 3 — Prueba multi-usuario con SignalR
+- [ ] Agregar segundo usuario de prueba en DB (ej. `gerardo` / `Test2026!`)
+- [ ] Abrir la app en 2 navegadores con usuarios distintos
+- [ ] Verificar que ambos reciben datos de SignalR correctamente y de forma independiente
+- [ ] Confirmar que SignalR mantiene conexiones separadas por cliente
+
+**Validación:** 2 navegadores abiertos, ambos recibiendo ticks simultáneamente.
+
+---
+
+#### Paso 4 — Filtro de divisas por usuario
+- [ ] Crear endpoint en API: `GET /api/users/{id}/symbols` → retorna divisas asignadas
+- [ ] En `SatiTrader/Index.cshtml`: al cargar, consultar el endpoint y poblar el `<select>` de divisas
+- [ ] El usuario solo ve las divisas que tiene asignadas (validado en backend)
+- [ ] Al cambiar símbolo en el select, el Hub filtra los ticks por ese símbolo
+
+**Validación:** Usuario `ivan` con `EURMXN` asignado solo ve ese símbolo en el dropdown.
+
+---
+
+#### Paso 5 — Validar exclusividad entre 2 usuarios
+- [ ] Asignar divisas diferentes a `ivan` y a `gerardo` desde la DB (o cuando Gerardo lo haga desde el Admin)
+- [ ] Abrir en 2 navegadores y verificar que cada usuario ve solo su divisa/símbolo asignado
+- [ ] Confirmar en DB que la restricción UNIQUE en `User_Symbols.SymbolStr` impide duplicados
+
+**Validación:** Intentar asignar la misma divisa a 2 usuarios → DB rechaza la inserción.
+
+### 8.6 Criterios de Aceptación — Fase 1
+
+**Panel Admin (Gerardo):**
+- [ ] El administrador puede configurar conexión MTAPI y controlar connect/disconnect
+- [ ] El administrador puede crear usuarios, habilitarlos/deshabilitarlos
+- [ ] El administrador puede asignar una o más divisas a un usuario
+- [ ] El sistema impide asignar la misma divisa a dos usuarios distintos (DB UNIQUE)
+
+**Web Trader (Ivan):**
+- [ ] El usuario puede iniciar sesión con usuario/contraseña validado contra DB
+- [ ] Tras login, el usuario ve solo las divisas que tiene asignadas
+- [ ] Los datos de tiempo real llegan correctamente vía SignalR
+- [ ] Dos usuarios pueden estar conectados simultáneamente y ver sus datos por separado
+- [ ] El filtro de símbolo en tiempo real funciona correctamente por usuario
+
+**Base de Datos:**
+- [ ] Script `Schema.txt` ejecuta sin errores en `sati_dev`
+- [ ] Usuario de prueba `ivan` creado con el INSERT del schema
+- [ ] Restricción UNIQUE en `User_Symbols.SymbolStr` activa y validada
