@@ -132,3 +132,17 @@ VALUES ('test2', 'test2@sati.dev', SHA2('Test2026!', 256), 'Usuario Test 2', 1, 
 
 INSERT INTO user_symbols (UserId, SymbolStr, IsActive)
 VALUES (2, 'USDJPY', 1);
+
+/***********/
+-- FASE 3 -
+Filtrado de periodos, minuto, hora
+/***********/
+
+USE sati_dev;
+
+-- Los registros existentes se consultaban originalmente como velas M1.
+ALTER TABLE Rates
+    ADD COLUMN TimeFrame VARCHAR(20) NOT NULL DEFAULT 'PERIOD_M1' AFTER HORA;
+
+CREATE INDEX idx_rates_symbol_fecha_timeframe
+    ON Rates (SymbolStr, FECHA, TimeFrame);

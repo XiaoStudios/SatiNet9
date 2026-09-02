@@ -181,11 +181,14 @@ public class MetaTraderController : ControllerBase
     // }
 
     [HttpGet("GetDatePriceHistory")]
-    public async Task<IActionResult> GetDatePriceHistory(DateTime dateFilter, string symbolStr, int wamPeriod) // ✅ async
+    public async Task<IActionResult> GetDatePriceHistory(DateTime dateFilter, string symbolStr, string timeFrame, int wamPeriod) // ✅ async
     {
+        if (!HistoryTimeFrameParser.TryParse(timeFrame, out var parsedTimeFrame))
+            return BadRequest("El periodo especificado no es válido. Debe ser M1, M2, M3, M4, M5 o M6.");
+        
         try
         {
-            var rates = await _metaTrader.GetDatePriceHistoryAsync(dateFilter, symbolStr, wamPeriod); // ✅ await
+            var rates = await _metaTrader.GetDatePriceHistoryAsync(dateFilter, symbolStr, parsedTimeFrame, wamPeriod); // ✅ await
             return Ok(rates);
         }
         catch (Exception ex)
@@ -196,12 +199,15 @@ public class MetaTraderController : ControllerBase
     }
 
     [HttpGet("GetDatePriceHistoryExcel")]
-    public IActionResult GetDatePriceHistoryExcel(DateTime dateFilter, string symbolStr, int wamPeriod)
+    public IActionResult GetDatePriceHistoryExcel(DateTime dateFilter, string symbolStr, string timeFrame, int wamPeriod)
     {
+        if (!HistoryTimeFrameParser.TryParse(timeFrame, out var parsedTimeFrame))
+            return BadRequest("El periodo especificado no es válido. Debe ser M1, M2, M3, M4, M5 o M6.");
+
         try
         {
             // var excelBytes = (_metaTrader as Sati_Net_Last.API.MTRepositories.MTRepo)?.GetDatePriceHistoryExcel(dateFilter, symbolStr);
-            var excelBytes = _metaTrader.GetDatePriceHistoryExcel(dateFilter, symbolStr, wamPeriod);
+            var excelBytes = _metaTrader.GetDatePriceHistoryExcel(dateFilter, symbolStr, parsedTimeFrame, wamPeriod);
 
             if (excelBytes == null)
                 return NotFound("No data found for the specified date and symbol.");
@@ -224,6 +230,7 @@ public class MetaTraderController : ControllerBase
     (
         DateTime dateFilter,
         string symbolStr,
+        string timeFrame,
         int wamPeriod,
         [FromQuery] double? pt = null,
         [FromQuery] double? pr = null,
@@ -232,12 +239,15 @@ public class MetaTraderController : ControllerBase
         [FromQuery] double? fd = null
     )
     {
+        if (!HistoryTimeFrameParser.TryParse(timeFrame, out var parsedTimeFrame))
+            return BadRequest("El periodo especificado no es válido. Debe ser M1, M2, M3, M4, M5 o M6.");
+
         try
         {
             _logger.LogInformation($"GetDatePriceHistoryWithAlgorithm: {symbolStr}, {dateFilter:yyyy-MM-dd}, WAM {wamPeriod}");
 
             // 1. Obtener datos básicos con WAM (método existente)
-            var rates = await _metaTrader.GetDatePriceHistoryAsync(dateFilter, symbolStr, wamPeriod);
+            var rates = await _metaTrader.GetDatePriceHistoryAsync(dateFilter, symbolStr, parsedTimeFrame, wamPeriod);
 
             if (rates == null || rates.Count == 0)
             {
@@ -275,22 +285,28 @@ public class MetaTraderController : ControllerBase
     }
 
     [HttpGet("GetDatePriceHistoryExcelWithAlgorithm")]
-    public async Task<IActionResult> GetDatePriceHistoryExcelWithAlgorithm(
+    public async Task<IActionResult> GetDatePriceHistoryExcelWithAlgorithm
+    (
         DateTime dateFilter,
         string symbolStr,
+        string timeFrame,
         int wamPeriod,
         [FromQuery] double? pt = null,
         [FromQuery] double? pr = null,
         [FromQuery] double? sigma = null,
         [FromQuery] double? mp = null,
-        [FromQuery] double? fd = null)
+        [FromQuery] double? fd = null
+    )
     {
+        if (!HistoryTimeFrameParser.TryParse(timeFrame, out var parsedTimeFrame))
+            return BadRequest("El periodo especificado no es válido. Debe ser M1, M2, M3, M4, M5 o M6.");
+        
         try
         {
             _logger.LogInformation($"GetDatePriceHistoryExcelWithAlgorithm: {symbolStr}, {dateFilter:yyyy-MM-dd}, WAM {wamPeriod}");
 
             // 1. Obtener datos básicos con WAM
-            var rates = await _metaTrader.GetDatePriceHistoryAsync(dateFilter, symbolStr, wamPeriod);
+            var rates = await _metaTrader.GetDatePriceHistoryAsync(dateFilter, symbolStr, parsedTimeFrame, wamPeriod);
 
             if (rates == null || rates.Count == 0)
             {
@@ -319,7 +335,7 @@ public class MetaTraderController : ControllerBase
             _logger.LogInformation($"Algoritmo calculado. Generando Excel con 19 columnas...");
 
             // 4. Generar Excel con todas las columnas del algoritmo
-            var excelBytes = _metaTrader.GetDatePriceHistoryExcelWithAlgorithm(rates, symbolStr, dateFilter, wamPeriod);
+            var excelBytes = _metaTrader.GetDatePriceHistoryExcelWithAlgorithm(rates, symbolStr, parsedTimeFrame, dateFilter, wamPeriod);
 
             if (excelBytes == null)
             {

@@ -44,12 +44,12 @@ public class HistoryMTController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> GetDatePriceHistory(DateTime dateFilter, string symbolStr, int wamPeriod)
+    public async Task<IActionResult> GetDatePriceHistory(DateTime dateFilter, string symbolStr, string timeFrame, int wamPeriod)
     {
         try
         {
             var client = _httpClientFactory.CreateClient("BackendAPI");
-            var response = await client.GetAsync($"api/MetaTrader/GetDatePriceHistory?dateFilter={dateFilter:yyyy-MM-dd}&symbolStr={symbolStr}&wamPeriod={wamPeriod}");
+            var response = await client.GetAsync($"api/MetaTrader/GetDatePriceHistory?dateFilter={dateFilter:yyyy-MM-dd}&symbolStr={symbolStr}&timeFrame={timeFrame}&wamPeriod={wamPeriod}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -71,12 +71,12 @@ public class HistoryMTController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetDatePriceHistoryExcel(DateTime dateFilter, string symbolStr, int wamPeriod)
+    public async Task<IActionResult> GetDatePriceHistoryExcel(DateTime dateFilter, string symbolStr, string timeFrame, int wamPeriod)
     {
         try
         {
             var client = _httpClientFactory.CreateClient("BackendAPI");
-            var response = await client.GetAsync($"api/MetaTrader/GetDatePriceHistoryExcel?dateFilter={dateFilter:yyyy-MM-dd}&symbolStr={symbolStr}&wamPeriod={wamPeriod}");
+            var response = await client.GetAsync($"api/MetaTrader/GetDatePriceHistoryExcel?dateFilter={dateFilter:yyyy-MM-dd}&symbolStr={symbolStr}&timeFrame={timeFrame}&wamPeriod={wamPeriod}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -104,6 +104,7 @@ public class HistoryMTController : Controller
     (
         DateTime dateFilter,
         string symbolStr,
+        string timeFrame,
         int wamPeriod,
         double? pt = null,
         double? pr = null,
@@ -118,11 +119,12 @@ public class HistoryMTController : Controller
 
             // Construir query string con parámetros opcionales
             var queryParams = new List<string>
-        {
-            $"dateFilter={dateFilter:yyyy-MM-dd}",
-            $"symbolStr={symbolStr}",
-            $"wamPeriod={wamPeriod}"
-        };
+            {
+                $"dateFilter={dateFilter:yyyy-MM-dd}",
+                $"symbolStr={symbolStr}",
+                $"timeFrame={timeFrame}",
+                $"wamPeriod={wamPeriod}"
+            };
 
             if (pt.HasValue) queryParams.Add($"pt={pt.Value}");
             if (pr.HasValue) queryParams.Add($"pr={pr.Value}");

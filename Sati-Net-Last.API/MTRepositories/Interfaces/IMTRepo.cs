@@ -8,9 +8,9 @@ public interface IMTRepo
     public Task TrackSymbolsAsync(List<string> symbols);
     public List<string> GetSymbolList();
     public List<Rates> GetPriceHistory(string symbol);
-    Task<List<Rates>> GetDatePriceHistoryAsync(DateTime dateFilter, string symbolStr, int wamPeriod);
-    public byte[] GetDatePriceHistoryExcel(DateTime dateFilter, string symbolStr, int wamPeriod);
-    public byte[] GetDatePriceHistoryExcelWithAlgorithm(List<Rates> rates, string symbolStr, DateTime dateFilter, int wamPeriod);
+    Task<List<Rates>> GetDatePriceHistoryAsync(DateTime dateFilter, string symbolStr, TimeFrame timeFrameHistory, int wamPeriod);
+    public byte[] GetDatePriceHistoryExcel(DateTime dateFilter, string symbolStr, TimeFrame timeFrameHistory, int wamPeriod);
+    public byte[] GetDatePriceHistoryExcelWithAlgorithm(List<Rates> rates, string symbolStr, TimeFrame timeFrameHistory, DateTime dateFilter, int wamPeriod);
     // public List<Rates> GetDatePriceHistory(DateTime dateFilter, string symbolStr);
     public void DisconnectFromMetaTrader();
     public void Mt5_OnPrice(object? sender, Quote e);

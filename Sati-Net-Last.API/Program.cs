@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using MTsocketAPI.MT5;
 using OfficeOpenXml;
 using Sati_Net_Last.API;
+using Sati_Net_Last.API.Data;
 using Sati_Net_Last.API.Hubs;
 using Sati_Net_Last.API.MTRepositories;
 using Sati_Net_Last.API.MTRepositories.Interfaces;

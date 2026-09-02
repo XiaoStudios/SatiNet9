@@ -7,6 +7,7 @@ using Sati_Net_Last.API.Hubs;
 using Sati_Net_Last.API.MTRepositories.Interfaces;
 using OfficeOpenXml; // Asegúrate de tener EPPlus instalado
 using OfficeOpenXml.Style;
+using Sati_Net_Last.API.Data;
 using System.IO;
 using Microsoft.EntityFrameworkCore;
 
@@ -247,7 +248,7 @@ public class MTRepo : IMTRepo
         return rates;
     }
 
-    public async Task<List<Rates>> GetDatePriceHistoryAsync(DateTime dateFilter, string symbolStr, int wamPeriod)
+    public async Task<List<Rates>> GetDatePriceHistoryAsync(DateTime dateFilter, string symbolStr, TimeFrame timeFrameHistory, int wamPeriod)
     {
         var rateLst = new List<Rates>();
 
@@ -275,9 +276,13 @@ public class MTRepo : IMTRepo
 
             // 1. ✅ Consulta asíncrona a la base de datos
             var datosExistentes = await _satiDevContext.Rates
-                .Where(r => r.Fecha == fechaFiltro && r.SymbolStr == symbolStr)
+                .Where(r =>
+                    r.Fecha == fechaFiltro &&
+                    r.SymbolStr == symbolStr &&
+                    r.TimeFrame == timeFrameHistory.ToString()
+                )
                 .OrderBy(r => r.Time)
-                .ToListAsync(); // ✅ Async
+                .ToListAsync();
 
             if (datosExistentes != null && datosExistentes.Count > 0)
             {
@@ -299,7 +304,6 @@ public class MTRepo : IMTRepo
             {
                 _logger.LogWarning($"⚠ No hay datos en DB, consultando MetaTrader...");
 
-                var timeFrameHistory = TimeFrame.PERIOD_M1;
                 var startDate = dateFilter.Date;
                 var endDate = startDate.AddDays(1);
 
@@ -346,7 +350,8 @@ public class MTRepo : IMTRepo
                             SymbolStr = symbolStr,
                             TimeMtApi = rate.TIME_MTAPI,
                             Fecha = fecha,
-                            Hora = hora
+                            Hora = hora,
+                            TimeFrame = timeFrameHistory.ToString()
                         });
                     }
 
@@ -410,19 +415,19 @@ public class MTRepo : IMTRepo
     }
 
     // ✅ Mantener versión síncrona para compatibilidad
-    public List<Rates> GetDatePriceHistory(DateTime dateFilter, string symbolStr, int wamPeriod)
+    public List<Rates> GetDatePriceHistory(DateTime dateFilter, string symbolStr, TimeFrame timeFrameHistory, int wamPeriod)
     {
-        return GetDatePriceHistoryAsync(dateFilter, symbolStr, wamPeriod).GetAwaiter().GetResult();
+        return GetDatePriceHistoryAsync(dateFilter, symbolStr, timeFrameHistory, wamPeriod).GetAwaiter().GetResult();
     }
 
-    public byte[] GetDatePriceHistoryExcel(DateTime dateFilter, string symbolStr, int wamPeriod)
+    public byte[] GetDatePriceHistoryExcel(DateTime dateFilter, string symbolStr, TimeFrame timeFrameHistory, int wamPeriod)
     {
         try
         {
             _logger.LogInformation($"=== EXCEL EXPORT: {symbolStr} - {dateFilter:yyyy-MM-dd} - WAM {wamPeriod} ===");
 
             // ✅ Obtener datos con WAM ya calculado
-            var rateLst = GetDatePriceHistory(dateFilter, symbolStr, wamPeriod);
+            var rateLst = GetDatePriceHistory(dateFilter, symbolStr, timeFrameHistory, wamPeriod);
 
             if (rateLst == null || rateLst.Count == 0)
             {
@@ -537,7 +542,7 @@ public class MTRepo : IMTRepo
         }
     }
 
-    public byte[] GetDatePriceHistoryExcelWithAlgorithm(List<Rates> rates, string symbolStr, DateTime dateFilter, int wamPeriod)
+    public byte[] GetDatePriceHistoryExcelWithAlgorithm(List<Rates> rates, string symbolStr, TimeFrame timeFrameHistory, DateTime dateFilter, int wamPeriod)
     {
         try
         {

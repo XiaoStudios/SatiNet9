@@ -35,6 +35,17 @@
                     <input type="date" id="dateFilter" class="form-control sati-input-control" />
                 </div>
                 <div class="col-md-2">
+                    <label for="timeFrameDropdown" class="sati-label">Periodo de vela</label>
+                    <select id="timeFrameDropdown" class="form-select sati-input-control">
+                        <option value="M1" selected>1 minuto (M1)</option>
+                        <option value="M2">2 minutos (M2)</option>
+                        <option value="M3">3 minutos (M3)</option>
+                        <option value="M4">4 minutos (M4)</option>
+                        <option value="M5">5 minutos (M5)</option>
+                        <option value="M6">6 minutos (M6)</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
                     <label for="wamPeriodDropdown" class="sati-label">Cálculo WAM</label>
                     <select id="wamPeriodDropdown" class="form-select sati-input-control">
                         <option>20</option>
@@ -42,15 +53,9 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                </div>
-                <div class="col-md-3">
                     <label class="form-label" style="opacity: 0;">-</label>
                     <button id="btnLoadHistory" class="btn btn-primary sati-load-btn">Cargar Historial</button>
                 </div>
-                @* <div class="col-md-3">
-                    <label class="form-label" style="opacity: 0;">-</label>
-                    <button class="btn btn-success w-100">Descargar Excel</button>
-                </div> *@
             </div>
         </div>
 

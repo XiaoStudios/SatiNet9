@@ -79,6 +79,7 @@ var HistoryJS =
         let symbol = $('#symbolDropdown').val();
         let dateFilter = $('#dateFilter').val();
         let wamPeriod = $('#wamPeriodDropdown').val();
+        let timeFrame = $('#timeFrameDropdown').val();
         let enableAlgorithm = $('#enableAlgorithm').prop('checked');
         
         if (!symbol || !dateFilter) {
@@ -93,6 +94,7 @@ var HistoryJS =
         let postData = {
             dateFilter: dateFilter,
             symbolStr: symbol,
+            timeFrame: timeFrame,
             wamPeriod: wamPeriod
         };
         
@@ -337,6 +339,7 @@ var HistoryJS =
     DownloadExcel: () => {
         const symbol = $('#symbolDropdown').val();
         const dateFilter = $('#dateFilter').val();
+        const timeFrame = $('#timeFrameDropdown').val();
         const wamPeriod = $('#wamPeriodDropdown').val();
 
         if (!symbol || !dateFilter) {
@@ -352,6 +355,7 @@ var HistoryJS =
         let params = {
             dateFilter: dateFilter,
             symbolStr: symbol,
+            timeFrame: timeFrame,
             wamPeriod: wamPeriod
         };
         
@@ -380,7 +384,7 @@ var HistoryJS =
                 const blobUrl = window.URL.createObjectURL(blob);
                 
                 const modeText = HistoryJS.lastLoadedWithAlgorithm ? 'Algoritmo' : 'Basico';
-                const fileName = `Historial_${symbol}_${dateFilter.replace(/-/g, '')}_WAM${wamPeriod}_${modeText}.xlsx`;
+                const fileName = `Historial_${symbol}_${dateFilter.replace(/-/g, '')}_${timeFrame}_WAM${wamPeriod}_${modeText}.xlsx`;
                 
                 link.href = blobUrl;
                 link.download = fileName;
