@@ -30,4 +30,6 @@ public partial class Rate
     public string? Fecha { get; set; }
 
     public string? Hora { get; set; }
+
+    public string TimeFrame { get; set; } = null!;
 }

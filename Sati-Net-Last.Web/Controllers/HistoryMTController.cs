@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Sati_Net_Last.Web.Controllers;
@@ -19,35 +20,36 @@ public class HistoryMTController : Controller
 
         try
         {
-            var client = _httpClientFactory.CreateClient("BackendAPI");
-            Console.WriteLine($"Requesting symbol list from API at {client.BaseAddress}");
-            var response = await client.GetAsync("api/MetaTrader/GetSymbolList");
+            var userId = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrWhiteSpace(userId))
+                return RedirectToAction("Login", "Account");
 
-            if (response.IsSuccessStatusCode)
+            var userSymbolsJson = HttpContext.Session.GetString("UserSymbols");
+            if (!string.IsNullOrWhiteSpace(userSymbolsJson))
             {
-                symbols = await response.Content.ReadFromJsonAsync<List<string>>() ?? new List<string>();
-            }
-            else
-            {
-                _logger.LogWarning($"API returned {response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
+                symbols = JsonSerializer.Deserialize<List<string>>(userSymbolsJson) ?? new List<string>();
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al cargar la lista de símbolos");
+            _logger.LogError(ex, "Error al cargar los símbolos asignados al usuario");
         }
 
         ViewBag.Symbols = symbols;
+        ViewBag.NoSymbolsMessage = symbols.Count == 0
+            ? "No tienes símbolos asignados. Habla con el administrador para que te asigne uno para consultar historial."
+            : null;
+
         return View();
     }
 
     [HttpPost]
-    public async Task<IActionResult> GetDatePriceHistory(DateTime dateFilter, string symbolStr, int wamPeriod)
+    public async Task<IActionResult> GetDatePriceHistory(DateTime dateFilter, string symbolStr, string timeFrame, int wamPeriod)
     {
         try
         {
             var client = _httpClientFactory.CreateClient("BackendAPI");
-            var response = await client.GetAsync($"api/MetaTrader/GetDatePriceHistory?dateFilter={dateFilter:yyyy-MM-dd}&symbolStr={symbolStr}&wamPeriod={wamPeriod}");
+            var response = await client.GetAsync($"api/MetaTrader/GetDatePriceHistory?dateFilter={dateFilter:yyyy-MM-dd}&symbolStr={symbolStr}&timeFrame={timeFrame}&wamPeriod={wamPeriod}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -69,12 +71,12 @@ public class HistoryMTController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetDatePriceHistoryExcel(DateTime dateFilter, string symbolStr, int wamPeriod)
+    public async Task<IActionResult> GetDatePriceHistoryExcel(DateTime dateFilter, string symbolStr, string timeFrame, int wamPeriod)
     {
         try
         {
             var client = _httpClientFactory.CreateClient("BackendAPI");
-            var response = await client.GetAsync($"api/MetaTrader/GetDatePriceHistoryExcel?dateFilter={dateFilter:yyyy-MM-dd}&symbolStr={symbolStr}&wamPeriod={wamPeriod}");
+            var response = await client.GetAsync($"api/MetaTrader/GetDatePriceHistoryExcel?dateFilter={dateFilter:yyyy-MM-dd}&symbolStr={symbolStr}&timeFrame={timeFrame}&wamPeriod={wamPeriod}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -102,6 +104,7 @@ public class HistoryMTController : Controller
     (
         DateTime dateFilter,
         string symbolStr,
+        string timeFrame,
         int wamPeriod,
         double? pt = null,
         double? pr = null,
@@ -116,11 +119,12 @@ public class HistoryMTController : Controller
 
             // Construir query string con parámetros opcionales
             var queryParams = new List<string>
-        {
-            $"dateFilter={dateFilter:yyyy-MM-dd}",
-            $"symbolStr={symbolStr}",
-            $"wamPeriod={wamPeriod}"
-        };
+            {
+                $"dateFilter={dateFilter:yyyy-MM-dd}",
+                $"symbolStr={symbolStr}",
+                $"timeFrame={timeFrame}",
+                $"wamPeriod={wamPeriod}"
+            };
 
             if (pt.HasValue) queryParams.Add($"pt={pt.Value}");
             if (pr.HasValue) queryParams.Add($"pr={pr.Value}");

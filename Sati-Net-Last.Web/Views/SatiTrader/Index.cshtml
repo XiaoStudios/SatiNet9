@@ -5,6 +5,7 @@
     var selectedSymbol = ViewBag.SelectedSymbol as string;
     var userId = Context.Session.GetString("UserId");
     var noSymbolsMessage = ViewBag.NoSymbolsMessage as string;
+    var backendApiBaseUrl = ViewBag.BackendApiBaseUrl as string ?? "http://localhost:5289/";
 }
 
 <style>
@@ -17,6 +18,7 @@
     .main-container {
         display: flex;
         height: calc(100vh - 56px);
+        min-height: 0;
         gap: 1rem;
         padding: 1rem;
         background: #f8f9fa;
@@ -24,6 +26,7 @@
 
     .controls-panel {
         width: 280px;
+        min-width: 220px;
         background: white;
         border: 1px solid #dee2e6;
         border-radius: 4px;
@@ -33,6 +36,7 @@
         flex-direction: column;
         gap: 1.5rem;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        min-height: 0;
     }
 
     .control-section h6 {
@@ -116,6 +120,8 @@
 
     .chart-container {
         flex: 1;
+        min-width: 0;
+        min-height: 0;
         background: white;
         border: 1px solid #dee2e6;
         border-radius: 4px;
@@ -142,6 +148,39 @@
         align-items: center;
         gap: 0.5rem;
         font-size: 1.1rem;
+    }
+
+    .chart-mode-switch {
+        display: inline-flex;
+        gap: 0.25rem;
+        padding: 0.2rem;
+        background: #f1f3f5;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+    }
+
+    .chart-mode-button {
+        border: 0;
+        background: transparent;
+        color: #6c757d;
+        padding: 0.35rem 0.65rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .chart-mode-button:hover,
+    .chart-mode-button.active {
+        background: #007bff;
+        color: white;
+    }
+
+    .wma-label {
+        color: #f5b942;
+        font-size: 0.75rem;
+        font-weight: 700;
+        margin-left: 0.5rem;
     }
 
     .chart-title-symbol {
@@ -173,6 +212,8 @@
     #traderChartContainer {
         flex: 1;
         min-height: 400px;
+        min-width: 0;
+        width: 100%;
         background: #000;
         border-radius: 4px;
         border: 1px solid #dee2e6;
@@ -180,6 +221,7 @@
 
     .info-panel {
         width: 300px;
+        min-width: 240px;
         background: white;
         border: 1px solid #dee2e6;
         border-radius: 4px;
@@ -189,6 +231,7 @@
         flex-direction: column;
         gap: 1.5rem;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        min-height: 0;
     }
 
     .info-section h6 {
@@ -288,6 +331,70 @@
             overflow-x: auto;
         }
     }
+
+    .chart-controls {
+        position: relative;
+        height: 100%;
+    }
+
+    #traderLiveIndicator {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        z-index: 10;
+        transition: opacity 0.3s ease;
+        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+    }
+
+    #traderLiveIndicator .live-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: white;
+        animation: liveIndicatorPulse 1.5s ease-in-out infinite;
+    }
+
+    @@keyframes liveIndicatorPulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.2); opacity: 0.7; }
+    }
+
+    #returnToLiveBtn {
+        position: absolute;
+        bottom: 2rem;
+        right: 2rem;
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        z-index: 20;
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        transition: all 0.3s ease;
+        display: none;
+    }
+
+    #returnToLiveBtn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 123, 255, 0.5);
+    }
+
+    #returnToLiveBtn:active {
+        transform: translateY(0);
+    }
 </style>
 
 <!-- Main Container -->
@@ -353,6 +460,19 @@
                 <span class="dot"></span>
                 EN VIVO
             </div>
+            <div class="chart-mode-switch" aria-label="Tipo de gráfico">
+                <button type="button" id="candlesModeBtn" class="chart-mode-button active" onclick="ChartsJS.ToggleTraderCandles()" title="Velas japonesas">
+                    <i class="fas fa-chart-column"></i> Velas
+                </button>
+                <button type="button" id="lineModeBtn" class="chart-mode-button" onclick="ChartsJS.ToggleTraderPriceLine()" title="Gráfico lineal">
+                    <i class="fas fa-chart-line"></i> Línea
+                </button>
+            </div>
+            <span class="wma-label">WMA</span>
+            <div class="chart-mode-switch" aria-label="Periodo del promedio móvil ponderado">
+                <button type="button" id="wma20Btn" class="chart-mode-button active" onclick="ChartsJS.ToggleTraderWma20()" title="Promedio móvil ponderado de 20 periodos">20</button>
+                <button type="button" id="wma50Btn" class="chart-mode-button" onclick="ChartsJS.ToggleTraderWma50()" title="Promedio móvil ponderado de 50 periodos">50</button>
+            </div>
         </div>
 
         @if (!string.IsNullOrWhiteSpace(noSymbolsMessage))
@@ -375,14 +495,15 @@
         }
         else
         {
-            <div id="traderChartContainer">
-                <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #555; font-size: 1rem;">
-                    <div style="text-align: center;">
-                        <i class="fas fa-wifi" style="font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.3;"></i>
-                        <p>Esperando datos en tiempo real...</p>
-                        <small style="color: #999;">Velas actualizadas vía SignalR</small>
-                    </div>
+            <div class="chart-controls">
+                <div id="traderLiveIndicator">
+                    <span class="live-dot"></span>
+                    EN VIVO
                 </div>
+                <div id="traderChartContainer"></div>
+                <button id="returnToLiveBtn" onclick="ChartsJS.ReturnToLiveChart()">
+                    <i class="fas fa-arrow-right"></i> Volver al Live
+                </button>
             </div>
         }
     </div>
@@ -426,73 +547,12 @@
 
 @section Scripts {
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const dropdown = document.getElementById('symbolDropdown');
-            const currentSymbol = '@(selectedSymbol ?? string.Empty)';
-            const userId = '@(userId ?? string.Empty)';
-
-            const initRealtimeIfAllowed = () => {
-                if (!userId) return;
-
-                fetch(`https://localhost:5100/api/metatrader/CheckRealtimeAccess?userId=${encodeURIComponent(userId)}`)
-                    .then(async response => {
-                        const payload = await response.json().catch(() => ({}));
-                        if (!response.ok || !payload.success) {
-                            console.warn(payload.message || 'No tienes permisos para ver el realtime de MT.');
-                            return;
-                        }
-
-                        if (dropdown && payload.selectedSymbol) {
-                            dropdown.value = payload.selectedSymbol;
-                            window.currentSelectedSymbol = payload.selectedSymbol;
-                            document.getElementById('chartSymbol').textContent = payload.selectedSymbol;
-                        }
-
-                        if (payload.selectedSymbol) {
-                            initSatiTrader();
-                        }
-                    })
-                    .catch(err => {
-                        console.warn('No se pudo validar el acceso al realtime en la API.', err);
-                    });
-            };
-
-            if (dropdown) {
-                if (currentSymbol) {
-                    dropdown.value = currentSymbol;
-                    window.currentSelectedSymbol = currentSymbol;
-                    document.getElementById('chartSymbol').textContent = currentSymbol;
-                }
-
-                dropdown.addEventListener('change', function () {
-                    const symbol = this.value;
-                    if (!symbol) return;
-
-                    window.currentSelectedSymbol = symbol;
-                    document.getElementById('chartSymbol').textContent = symbol;
-                    
-                    fetch('/Home/SetSelectedSymbol?symbol=' + encodeURIComponent(symbol), {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' }
-                    });
-
-                    initRealtimeIfAllowed();
-                });
-            }
-
-            if (currentSymbol) {
-                initRealtimeIfAllowed();
-            }
-
-            // Simular actualización de timestamp
-            setInterval(() => {
-                const now = new Date();
-                const seconds = now.getSeconds();
-                const updateElement = document.getElementById('lastUpdate');
-                if (updateElement) {
-                    updateElement.innerHTML = 'Hace ' + seconds + 's';
-                }
-            }, 1000);
-        });
+        window.satiTraderConfig = {
+            selectedSymbol: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(selectedSymbol ?? string.Empty)),
+            userId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(userId ?? string.Empty)),
+            backendApiBaseUrl: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(backendApiBaseUrl))
+        };
     </script>
+    <script src="~/js/charts.js" asp-append-version="true"></script>
+    <script src="~/js/satitrader/index.js" asp-append-version="true"></script>
 }

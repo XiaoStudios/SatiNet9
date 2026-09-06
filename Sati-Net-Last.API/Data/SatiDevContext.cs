@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Sati_Models.DBModels;
 
-namespace Sati_Net_Last.API;
+namespace Sati_Net_Last.API.Data;
 
 public partial class SatiDevContext : DbContext
 {
@@ -31,7 +31,7 @@ public partial class SatiDevContext : DbContext
         if (!optionsBuilder.IsConfigured)
             throw new Exception("No se ha configurado el contexto de la base de datos. Utilice la sobrecarga del constructor que acepta DbContextOptions<SatiDevContext>.");
     }
-
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -119,6 +119,8 @@ public partial class SatiDevContext : DbContext
 
             entity.HasIndex(e => new { e.Fecha, e.Hora }, "idx_rates_fecha_hora");
 
+            entity.HasIndex(e => new { e.SymbolStr, e.Fecha, e.TimeFrame }, "idx_rates_symbol_fecha_timeframe");
+
             entity.HasIndex(e => new { e.SymbolStr, e.Time }, "idx_rates_symbol_time");
 
             entity.Property(e => e.Close).HasColumnName("CLOSE");
@@ -138,6 +140,9 @@ public partial class SatiDevContext : DbContext
             entity.Property(e => e.Time)
                 .HasMaxLength(20)
                 .HasColumnName("TIME");
+            entity.Property(e => e.TimeFrame)
+                .HasMaxLength(20)
+                .HasDefaultValueSql("'PERIOD_M1'");
             entity.Property(e => e.TimeMtApi)
                 .HasMaxLength(20)
                 .HasColumnName("Time_MT_Api");

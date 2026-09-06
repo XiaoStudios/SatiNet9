@@ -5,6 +5,13 @@ namespace Sati_Net_Last.Web.Controllers;
 
 public class SatiTraderController : Controller
 {
+    private readonly IConfiguration _configuration;
+
+    public SatiTraderController(IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
+
     public IActionResult Index()
     {
         var userId = HttpContext.Session.GetString("UserId");
@@ -29,6 +36,7 @@ public class SatiTraderController : Controller
         ViewBag.NoSymbolsMessage = symbols.Count == 0
             ? "Tu usuario no tiene símbolos asignados. Habla con el administrador para que te asigne uno."
             : null;
+        ViewBag.BackendApiBaseUrl = _configuration["BackendAPI:BaseUrl"] ?? "http://localhost:5289/";
 
         return View();
     }

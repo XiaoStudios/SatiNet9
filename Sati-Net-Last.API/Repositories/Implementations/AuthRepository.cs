@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Sati_Models.DBModels;
+using Sati_Net_Last.API.Data;
 using Sati_Net_Last.API.Repositories.Interfaces;
 
 namespace Sati_Net_Last.API.Repositories.Implementations;

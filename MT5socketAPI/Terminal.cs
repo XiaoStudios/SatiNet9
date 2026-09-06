@@ -262,29 +262,29 @@ namespace MTsocketAPI.MT5
 						JObject jresult = JObject.Parse(line);
 						if (jresult["MSG"].ToString() == "TRACK_PRICES")
 						{
-							Quote price = JsonConvert.DeserializeObject<Quote>(line);
-							if (OnPrice != null) OnPrice(this, price);
+							var price = JsonConvert.DeserializeObject<Quote>(line);
+							if (price != null && OnPrice != null) OnPrice(this, price);
 						}
 						if (jresult["MSG"].ToString() == "TRACK_MBOOK")
 						{
-							MarketDepth domdata = JsonConvert.DeserializeObject<MarketDepth>(line);
-							if (OnMarketDepth != null) OnMarketDepth(this, domdata);
+							var domdata = JsonConvert.DeserializeObject<MarketDepth>(line);
+							if (domdata != null && OnMarketDepth != null) OnMarketDepth(this, domdata);
 						}
 						else if (jresult["MSG"].ToString() == "TRACK_OHLC")
 						{
-							OHLC_Msg price = JsonConvert.DeserializeObject<OHLC_Msg>(line);
-							if (OnOHLC != null) OnOHLC(this, price);
+							var price = JsonConvert.DeserializeObject<OHLC_Msg>(line);
+							if (price != null && OnOHLC != null) OnOHLC(this, price);
 						}
 						else if (jresult["MSG"].ToString() == "TRACK_TRADE_EVENTS")
 						{
-							OrderEvent ordEvent = JsonConvert.DeserializeObject<OrderEvent>(line);
-							if (OnOrderEvent != null) OnOrderEvent(this, ordEvent);
+							var ordEvent = JsonConvert.DeserializeObject<OrderEvent>(line);
+							if (ordEvent != null && OnOrderEvent != null) OnOrderEvent(this, ordEvent);
 						}
 					});
 				}
-				catch (Exception ex)
+				catch (Exception)
 				{
-
+					throw;
 				}
 
 			} while (true);
@@ -568,7 +568,7 @@ namespace MTsocketAPI.MT5
 		/// <param name="Index">Buffer Index</param>
 		/// <param name="Num">Number of elements</param>
 		/// <param name="Params">Parameters</param>
-		public List<double> Custom_Indicator(string Symbol, TimeFrame tf, string Indicator_Name, int Index, int Num = 1, List<string> Params = null)
+		public List<double> Custom_Indicator(string Symbol, TimeFrame tf, string Indicator_Name, int Index, int Num = 1, List<string>? Params = null)
 		{
 			try
 			{
@@ -1291,7 +1291,7 @@ namespace MTsocketAPI.MT5
 		List<double> ATR_Indicator(string Symbol, TimeFrame tf, int Period, int Shift, int Num = 1);
 		CalendarList CalendarList(DateTime FromDate, DateTime ToDate, string Currency = "", string Country_code = "");
 		bool Connect(string host = "127.0.0.1", int cmd_port = 71, int data_port = 72);
-		List<double> Custom_Indicator(string Symbol, TimeFrame tf, string Indicator_Name, int Index, int Num = 1, List<string> Params = null);
+		List<double> Custom_Indicator(string Symbol, TimeFrame tf, string Indicator_Name, int Index, int Num = 1, List<string>? Params = null);
 		AccountStatus GetAccountStatus();
 		List<Position> GetOpenedOrders();
 		List<Position> GetPendingOrders();

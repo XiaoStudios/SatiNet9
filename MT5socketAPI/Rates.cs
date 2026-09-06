@@ -9,7 +9,7 @@ namespace MTsocketAPI.MT5
 {
 	public class Rates
 	{
-		public string TIME { get; set; }
+		public string TIME { get; set; } = string.Empty;
 		public double OPEN { get; set; }
 		public double HIGH { get; set; }
 		public double LOW { get; set; }
@@ -52,11 +52,11 @@ namespace MTsocketAPI.MT5
 		public double? PreviousPMPn { get; set; }
 		public double RPPlus { get; set; }
 		public double RPMinus { get; set; }
-		public string Tendencia { get; set; }
+		public string Tendencia { get; set; } = string.Empty;
 		public double Difn { get; set; }
 		public double? PromDifn { get; set; }
 		public double? SigmaDifn { get; set; }
-		public string Signal { get; set; }
+		public string Signal { get; set; } = string.Empty;
 		public double? ImporteAcumulacion { get; set; }
     }
 
@@ -65,14 +65,14 @@ namespace MTsocketAPI.MT5
 		public double PRICE { get; set; }
 		public int VOLUME { get; set; }
 		public double VOLUMEREAL { get; set; }
-		public string TYPE { get; set; }
+		public string TYPE { get; set; } = string.Empty;
 	}
 
 	public class MarketDepth
 	{
 		//public string MSG { get; set; }
-		public string SYMBOL { get; set; }
-		public List<MarketBook> MARKET_BOOK { get; set; }
+		public string SYMBOL { get; set; } = string.Empty;
+		public List<MarketBook>? MARKET_BOOK { get; set; }
 		public override string ToString()
 		{
 			return JsonConvert.SerializeObject(this);
