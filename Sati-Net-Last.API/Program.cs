@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using MTsocketAPI.MT5;
 using OfficeOpenXml;
 using Sati_Net_Last.API;
@@ -8,6 +10,7 @@ using Sati_Net_Last.API.MTRepositories.Interfaces;
 using Sati_Net_Last.API.Repositories.Implementations;
 using Sati_Net_Last.API.Repositories.Interfaces;
 using Sati_Net_Last.API.Services;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +21,25 @@ ExcelPackage.License.SetNonCommercialPersonal("Jesus Ivan Vazquez");
 
 // Add services to the container.
 builder.Services.AddControllers();
+// 🟢 CONFIGURACIÓN JWT
+var jwtKey = builder.Configuration["Jwt:Key"] ?? "TuSuperClaveSecretaSuperLargaYSeguraParaJWT2026_SATI";
+var keyBytes = Encoding.UTF8.GetBytes(jwtKey);
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.RequireHttpsMetadata = false;
+        options.SaveToken = true;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -63,6 +85,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 

@@ -1,0 +1,76 @@
+@model Sati_Models.DTOs.MtapiSettingDto
+
+@{
+    ViewData["Title"] = "Nueva Configuración de MetaTrader";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <h1 class="mb-4">Crear Nueva Configuración de MetaTrader</h1>
+
+            <form method="post" asp-action="Create" asp-controller="MtapiSettings">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <!-- Host -->
+                <div class="mb-3">
+                    <label asp-for="Host" class="form-label">Host / Dirección del Servidor</label>
+                    <input asp-for="Host" class="form-control" placeholder="Ej. localhost o IP" />
+                    <span asp-validation-for="Host" class="text-danger"></span>
+                    <small class="form-text text-muted">Dirección IP o nombre del host del servidor MetaTrader</small>
+                </div>
+
+                <!-- Puerto -->
+                <div class="mb-3">
+                    <label asp-for="Port" class="form-label">Puerto</label>
+                    <input asp-for="Port" type="number" class="form-control" placeholder="Ej. 5555" />
+                    <span asp-validation-for="Port" class="text-danger"></span>
+                    <small class="form-text text-muted">Puerto en el que escucha el servidor MetaTrader (típicamente 5555)</small>
+                </div>
+
+                <!-- Usuario de MetaTrader -->
+                <div class="mb-3">
+                    <label asp-for="MtUser" class="form-label">Usuario de MetaTrader</label>
+                    <input asp-for="MtUser" class="form-control" placeholder="Ej. admin" />
+                    <span asp-validation-for="MtUser" class="text-danger"></span>
+                    <small class="form-text text-muted">Nombre de usuario para conectarse a MetaTrader</small>
+                </div>
+
+                <!-- Contraseña -->
+                <div class="mb-3">
+                    <label asp-for="MtPassword" class="form-label">Contraseña</label>
+                    <input asp-for="MtPassword" type="password" class="form-control" placeholder="Contraseña segura" />
+                    <span asp-validation-for="MtPassword" class="text-danger"></span>
+                    <small class="form-text text-muted">Contraseña del usuario de MetaTrader</small>
+                </div>
+
+                <!-- Estado Activo -->
+                <div class="mb-3 form-check">
+                    <input asp-for="IsActive" type="checkbox" class="form-check-input" id="isActiveCheckbox" />
+                    <label class="form-check-label" for="isActiveCheckbox">
+                        Configuración Activa
+                    </label>
+                    <small class="form-text text-muted d-block mt-2">Marca esta opción para activar esta configuración inmediatamente</small>
+                </div>
+
+                <!-- Información de Seguridad -->
+                <div class="alert alert-warning" role="alert">
+                    <h6>⚠️ Nota de Seguridad</h6>
+                    <p class="mb-0">Las credenciales se almacenan en la base de datos. Se recomienda considerar encriptación adicional para datos sensibles en producción.</p>
+                </div>
+
+                <!-- Botones -->
+                <div class="d-grid gap-2 d-sm-flex justify-content-sm-end">
+                    <a href="@Url.Action("Index", "MtapiSettings")" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Crear Configuración
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

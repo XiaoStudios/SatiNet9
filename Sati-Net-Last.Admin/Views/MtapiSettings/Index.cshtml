@@ -1,0 +1,348 @@
+@model IEnumerable<Sati_Models.DTOs.MtapiSettingDto>
+
+@{
+    ViewData["Title"] = "Panel de Administracion API";
+    // Tomamos la configuración más reciente, o creamos una vacía si no hay ninguna
+    var currentConfig = Model.FirstOrDefault() ?? new Sati_Models.DTOs.MtapiSettingDto();
+}
+
+<style>
+    body { background-color: #f8fafc; }
+    .admin-header { margin-bottom: 20px; }
+    .nav-pills .nav-link {
+        color: #334155;
+        background-color: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        margin-right: 10px;
+        font-weight: 600;
+        border-radius: 6px;
+    }
+    .nav-pills .nav-link.active {
+        background-color: #5555dd;
+        border-color: #5555dd;
+        color: #ffffff;
+    }
+    .admin-card {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        border: 1px solid #e2e8f0;
+    }
+    .form-label { font-size: 0.85rem; color: #475569; font-weight: 600; }
+    .btn-custom-primary { background-color: #5555dd; border-color: #5555dd; color: white; font-weight: 500; }
+    .btn-custom-primary:hover { background-color: #4444cc; color: white; }
+    .btn-custom-success { background-color: #22c55e; border-color: #22c55e; color: white; font-weight: 500; }
+    .btn-custom-success:hover { background-color: #16a34a; color: white; }
+    .btn-custom-outline { background-color: #ffffff; border: 1px solid #cbd5e1; color: #334155; font-weight: 500; }
+    .btn-custom-outline:hover { background-color: #f8fafc; color: #0f172a; }
+    .log-console {
+        background-color: #ffffff;
+        color: #334155;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 0.85rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        padding: 10px;
+        height: 120px;
+        overflow-y: auto;
+        resize: none;
+    }
+</style>
+
+<div class="container-fluid mt-4" style="max-width: 1100px;">
+    <div class="admin-header">
+        <h2 class="fw-bold mb-1">Panel de Administracion API</h2>
+        <p class="text-muted">Selecciona un panel para mostrar solo su configuracion</p>
+    </div>
+
+    <!-- Pestañas de Navegación -->
+    <ul class="nav nav-pills mb-4" id="adminTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="mtapi-tab" data-bs-toggle="pill" data-bs-target="#mtapi" type="button" role="tab">Administrador de MTAPI</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="usuarios-tab" data-bs-toggle="pill" data-bs-target="#usuarios" type="button" role="tab">Administrador de usuarios</button>
+        </li>
+    </ul>
+
+    <!-- Contenido de las Pestañas -->
+    <div class="tab-content" id="adminTabsContent">
+        
+        <!-- PESTAÑA 1: MTAPI -->
+        <div class="tab-pane fade show active" id="mtapi" role="tabpanel">
+            <div class="admin-card">
+                <h5 class="fw-bold mb-4">Configuracion MTAPI</h5>
+                
+                <form id="formMtapi">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="configId" value="@currentConfig.Id" />
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">IP o Host</label>
+                            <input type="text" class="form-control" id="hostInput" value="@currentConfig.Host" placeholder="192.168.0.29">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Puerto</label>
+                            <input type="number" class="form-control" id="portInput" value="@(currentConfig.Port == 0 ? 5001 : currentConfig.Port)" placeholder="5001">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Timeout (segundos)</label>
+                            <input type="number" class="form-control" id="timeoutInput" value="30">
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Usuario MTAPI</label>
+                            <input type="text" class="form-control" id="userInput" value="@currentConfig.MtUser" placeholder="mtapi_user">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Password MTAPI</label>
+                            <input type="password" class="form-control" id="passwordInput" value="@currentConfig.MtPassword" placeholder="••••••••">
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mb-4">
+                        <button type="button" class="btn btn-custom-primary px-4" onclick="guardarConfiguracion()">Guardar configuracion</button>
+                        <button type="button" class="btn btn-custom-outline px-4" onclick="probarConexion()">Probar conexion</button>
+                        <button type="button" class="btn btn-custom-success px-4" onclick="conectarMTAPI()">Conectar MTAPI</button>
+                        <button type="button" class="btn btn-custom-outline px-4" onclick="desconectarMTAPI()">Desconectar</button>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Log de conexion</label>
+                        <textarea class="form-control log-console" readonly id="logConsole">[10:42:11] Inicio de conexion solicitado
+[10:42:12] Handshake OK
+[10:42:12] Estado: CONNECTED
+[10:44:57] Ping 42ms</textarea>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- PESTAÑA 2: USUARIOS -->
+        <div class="tab-pane fade" id="usuarios" role="tabpanel">
+            <div class="admin-card">
+                <h5 class="fw-bold mb-4">Configuracion de usuarios y simbolos</h5>
+
+                <!-- Formulario de creación/asignación -->
+                <form id="formUsuarios" class="mb-4">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Nuevo usuario</label>
+                            <input type="email" class="form-control" id="nuevoUsuarioEmail" placeholder="trader01@sati.local">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Simbolos asignados</label>
+                            <input type="text" class="form-control" id="simbolosAsignados" placeholder="EURUSD, GBPUSD, XAUUSD">
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-custom-primary px-4" onclick="crearUsuario()">Crear usuario</button>
+                        <button type="button" class="btn btn-custom-outline px-4" onclick="actualizarAsignaciones()">Actualizar asignaciones</button>
+                    </div>
+                </form>
+
+                <!-- Regla activa Banner -->
+                <div class="alert alert-warning py-2 mb-4" style="background-color: #fef08a; border-color: #fde047; color: #854d0e; font-size: 0.9rem; font-weight: 500;">
+                    Regla activa: en Sati-Net-Last.Web el usuario solo vera simbolos asignados desde este panel.
+                </div>
+
+                <!-- Tabla de Usuarios -->
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle border">
+                        <thead class="table-light text-secondary" style="background-color: #5555dd; color: white !important;">
+                            <tr>
+                                <th>Usuario</th>
+                                <th class="text-center">Estado</th>
+                                <th>Simbolos asignados</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaUsuariosBody">
+                            <!-- Fila de ejemplo 1 -->
+                            <tr>
+                                <td class="text-muted">trader01@sati.local</td>
+                                <td class="text-center">
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">HABILITADO</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border me-1">EURUSD</span>
+                                    <span class="badge bg-light text-dark border me-1">GBPUSD</span>
+                                    <span class="badge bg-light text-dark border">XAUUSD</span>
+                                </td>
+                                <td class="text-center text-muted" style="font-size: 0.85rem;">
+                                    <a href="#" class="text-decoration-none text-muted hover-primary">Editar</a> |
+                                    <a href="#" class="text-decoration-none text-muted hover-danger">Deshabilitar</a>
+                                </td>
+                            </tr>
+                            <!-- Fila de ejemplo 2 -->
+                            <tr>
+                                <td class="text-muted">trader02@sati.local</td>
+                                <td class="text-center">
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1">DESHABILITADO</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border me-1">USDJPY</span>
+                                    <span class="badge bg-light text-dark border">USDCAD</span>
+                                </td>
+                                <td class="text-center text-muted" style="font-size: 0.85rem;">
+                                    <a href="#" class="text-decoration-none text-muted hover-primary">Editar</a> |
+                                    <a href="#" class="text-decoration-none text-muted hover-success">Habilitar</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function guardarConfiguracion() {
+            // 1. Recolectar datos del formulario
+            const id = document.getElementById('configId').value || 0;
+            const host = document.getElementById('hostInput').value;
+            const port = document.getElementById('portInput').value;
+            const user = document.getElementById('userInput').value;
+            const pass = document.getElementById('passwordInput').value;
+
+            // 2. Empaquetar datos para un controlador MVC (x-www-form-urlencoded)
+            const formData = new URLSearchParams();
+            formData.append('Id', id);
+            formData.append('Host', host);
+            formData.append('Port', port);
+            formData.append('MtUser', user);
+            formData.append('MtPassword', pass);
+            formData.append('IsActive', 'true');
+
+            // 3. Obtener el token de seguridad antifalsificación
+            const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+            if(tokenElement) {
+                formData.append('__RequestVerificationToken', tokenElement.value);
+            }
+
+            // 4. Determinar si es creación o actualización
+            const url = id > 0 ? `/MtapiSettings/Edit/${id}` : `/MtapiSettings/Create`;
+
+            try {
+                // 5. Enviar petición silenciosa
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
+                });
+
+                if (response.ok) {
+                    alert("¡Configuración guardada en la base de datos exitosamente!");
+                    window.location.reload(); // Recargar para mostrar los datos frescos
+                } else {
+                    alert("Ocurrió un error al guardar. Revisa que tu API esté corriendo.");
+                }
+            } catch (error) {
+                console.error("Error de conexión:", error);
+                alert("Fallo de red al intentar guardar la configuración.");
+            }
+        }
+
+        function agregarLog(mensaje) {
+            const consoleEl = document.getElementById('logConsole');
+            const now = new Date();
+            const timeString = now.toTimeString().split(' ')[0];
+            // Agrega el mensaje con la hora actual y hace scroll hacia abajo
+            consoleEl.value += `\n[${timeString}] ${mensaje}`;
+            consoleEl.scrollTop = consoleEl.scrollHeight; 
+        }
+
+        // Función genérica para hacer peticiones POST
+        async function ejecutarComando(accion, url) {
+            agregarLog(`Solicitando: ${accion}...`);
+            try {
+                // Hacemos la petición a nuestro propio MtapiSettingsController
+                const response = await fetch(url, { method: 'POST' });
+                
+                if (response.ok) {
+                    agregarLog(`✅ ${accion} ejecutada con éxito.`);
+                } else {
+                    agregarLog(`❌ Error en ${accion} (El servidor respondió con código ${response.status}).`);
+                }
+            } catch (error) {
+                console.error(error);
+                agregarLog(`⚠️ Fallo de red local al intentar comunicarse con el controlador.`);
+            }
+        }
+
+        // Acciones específicas ligadas a los botones
+        function probarConexion() {
+            ejecutarComando("Prueba de Ping a MT5", "/MtapiSettings/TestConnection");
+        }
+
+        function conectarMTAPI() {
+            ejecutarComando("Conexión a MetaTrader API", "/MtapiSettings/Connect");
+        }
+
+        function desconectarMTAPI() {
+            ejecutarComando("Desconexión de MetaTrader API", "/MtapiSettings/Disconnect");
+        }
+
+        async function crearUsuario() {
+            const email = document.getElementById('nuevoUsuarioEmail').value;
+            const simbolos = document.getElementById('simbolosAsignados').value;
+
+            if (!email || !simbolos) {
+                alert("Por favor, ingresa el correo del usuario y al menos un símbolo.");
+                return;
+            }
+
+            const formData = new URLSearchParams();
+            formData.append('email', email);
+            formData.append('simbolos', simbolos);
+
+            const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+            if(tokenElement) {
+                formData.append('__RequestVerificationToken', tokenElement.value);
+            }
+
+            try {
+                // 🟢 Usamos el helper de Razor para asegurar que la ruta sea exacta
+                const response = await fetch('@Url.Action("CrearAsignacionAjax", "Usuarios")', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                });
+
+                if (response.ok) {
+                    alert(`¡Símbolos asignados correctamente al usuario ${email}!`);
+                    document.getElementById('nuevoUsuarioEmail').value = '';
+                    document.getElementById('simbolosAsignados').value = '';
+                } else if (response.status === 404) {
+                    alert(`El usuario ${email} no existe o la ruta no fue encontrada.`);
+                } else {
+                    alert("Ocurrió un error al guardar la asignación.");
+                }
+            } catch (error) {
+                console.error("Error de conexión:", error);
+            }
+        }
+
+        async function actualizarAsignaciones() {
+            const email = document.getElementById('nuevoUsuarioEmail').value;
+            const simbolos = document.getElementById('simbolosAsignados').value;
+
+            if (!email) {
+                alert("Selecciona un usuario de la tabla para editar sus símbolos.");
+                return;
+            }
+
+            alert(`Simulando actualización: Símbolos de ${email} actualizados a [${simbolos}].`);
+        }
+    </script>
+}

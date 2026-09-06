@@ -1,37 +1,105 @@
 ﻿@model Sati_Net_Last.Admin.Models.LoginViewModel
 @{
-    ViewData["Title"] = "Login";
+    ViewData["Title"] = "Acceso Administrador";
 }
 
-<h2>Iniciar sesión</h2>
+<style>
+    body {
+        background-color: #f8fafc;
+    }
+    .login-container {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .login-card {
+        width: 100%;
+        max-width: 440px;
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 32px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+        border: 1px solid #e2e8f0;
+    }
+    .btn-custom-primary {
+        background-color: #5555dd;
+        border-color: #5555dd;
+        color: #ffffff;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    .btn-custom-primary:hover {
+        background-color: #4444cc;
+        border-color: #4444cc;
+        color: #ffffff;
+    }
+    .btn-demo {
+        background-color: #ffffff;
+        border: 1px solid #cbd5e1;
+        color: #334155;
+        font-weight: 500;
+    }
+    .btn-demo:hover {
+        background-color: #f1f5f9;
+        color: #1e293b;
+    }
+    .demo-callout {
+        background-color: #e0f2fe;
+        border-left: 4px solid #0284c7;
+        color: #0369a1;
+        font-size: 0.85rem;
+        border-radius: 4px;
+        padding: 10px 14px;
+    }
+</style>
 
-<form asp-action="Login" method="post">
-    @Html.AntiForgeryToken()
+<div class="login-container">
+    <div class="login-card">
+        <h3 class="fw-bold mb-1 text-dark">Acceso Administrador</h3>
+        <p class="text-muted small mb-4">Inicia sesión para entrar al panel de administración API</p>
 
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <form asp-action="Login" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="ReturnUrl" />
 
-    <div class="mb-3">
-        <label asp-for="Correo" class="form-label"></label>
-        <input asp-for="Correo" class="form-control" />
-        <span asp-validation-for="Correo" class="text-danger"></span>
+            <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="Correo" class="form-label text-secondary small fw-bold">Correo</label>
+                <input asp-for="Correo" id="inputEmail" class="form-control" placeholder="admin@sati.local" autofocus />
+                <span asp-validation-for="Correo" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label text-secondary small fw-bold">Password</label>
+                <input asp-for="Password" id="inputPassword" type="password" class="form-control" placeholder="••••••" />
+                <span asp-validation-for="Password" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3 form-check">
+                <input asp-for="RememberMe" class="form-check-input" id="rememberMeCheck" />
+                <label asp-for="RememberMe" class="form-check-label small text-muted" for="rememberMeCheck">Recordar sesión</label>
+            </div>
+
+            <div class="d-grid gap-2 mb-3">
+                <button type="submit" class="btn btn-custom-primary py-2">Iniciar sesion</button>
+                <button type="button" class="btn btn-demo py-2" onclick="cargarDemo()">Cargar demo</button>
+            </div>
+
+            <div class="demo-callout mt-3">
+                <strong>Credenciales demo:</strong> admin@sati.local / 123456
+            </div>
+        </form>
     </div>
-
-    <div class="mb-3">
-        <label asp-for="Password" class="form-label"></label>
-        <input asp-for="Password" class="form-control" />
-        <span asp-validation-for="Password" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3 form-check">
-        <input asp-for="RememberMe" class="form-check-input" />
-        <label asp-for="RememberMe" class="form-check-label">Recordarme</label>
-    </div>
-
-    <input type="hidden" asp-for="ReturnUrl" />
-
-    <button type="submit" class="btn btn-primary">Entrar</button>
-</form>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        function cargarDemo() {
+            document.getElementById('inputEmail').value = 'admin@sati.local';
+            document.getElementById('inputPassword').value = 'admin123';
+        }
+    </script>
 }

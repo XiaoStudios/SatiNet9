@@ -1,4 +1,4 @@
-@model IEnumerable<UserSymbol>
+@model IEnumerable<Sati_Models.DTOs.UserSymbolDto>
 
 @{
     ViewData["Title"] = "Gestión de Símbolos";
@@ -45,7 +45,7 @@
                     {
                         <tr>
                             <td>@symbol.Id</td>
-                            <td>@(symbol.User?.FullName ?? "N/A")</td>
+                            <td>@(symbol.UserFullName ?? "N/A")</td>
                             <td><span class="badge bg-info">@symbol.SymbolStr</span></td>
                             <td>
                                 @if (symbol.IsActive)

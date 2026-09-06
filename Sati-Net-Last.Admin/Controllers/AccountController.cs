@@ -3,8 +3,9 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Sati_Net_Last.Admin.Models;
+using Sati_Models.DTOs;
 using Sati_Net_Last.Admin.Repositories;
+using Sati_Net_Last.Admin.Models;
 
 namespace Sati_Net_Last.Admin.Controllers;
 
@@ -31,8 +32,8 @@ public class AccountController : Controller
         if (!ModelState.IsValid)
             return View(model);
 
-        var admin = await _repo.AutenticarAsync(model.Correo, model.Password);
-        if (admin == null)
+        var resp = await _repo.AutenticarAsync(model.Correo, model.Password);
+        if (resp == null)
         {
             ModelState.AddModelError(string.Empty, "Usuario o contraseña inválidos.");
             return View(model);
@@ -40,9 +41,9 @@ public class AccountController : Controller
 
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, admin.Id.ToString()),
-            new Claim(ClaimTypes.Name, admin.FullName ?? admin.Username),
-            new Claim(ClaimTypes.Email, admin.Email)
+            new Claim(ClaimTypes.NameIdentifier, resp.UserId.ToString()),
+            new Claim(ClaimTypes.Name, resp.FullName ?? resp.Username),
+            new Claim(ClaimTypes.Email, resp.Email)
         };
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -54,12 +55,18 @@ public class AccountController : Controller
             AllowRefresh = true
         };
 
+        // Además, crear una cookie adicional o guardar el token en claims si es necesario
+        if (!string.IsNullOrEmpty(resp.SessionToken))
+        {
+            identity.AddClaim(new Claim("SessionToken", resp.SessionToken));
+        }
+
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, props);
 
         if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
             return Redirect(model.ReturnUrl!);
 
-        return RedirectToAction("Index", "Home");
+        return RedirectToAction("Index", "MtapiSettings");
     }
 
     [HttpGet]

@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.EntityFrameworkCore;
-using Sati_Net_Last.Admin.Data;
 using Sati_Net_Last.Admin.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,20 +6,19 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews()
     .AddRazorRuntimeCompilation();
 
-// Registrar repositorio
-builder.Services.AddScoped<IAdminRepository, AdminRepository>();
+// Registrar repositorio (implementación consumirá la API vía HttpClient)
+builder.Services.AddScoped<Sati_Net_Last.Admin.Repositories.IAdminRepository, Sati_Net_Last.Admin.Repositories.AdminRepository>();
 
-// DbContext (MySQL)
-var adminConn = builder.Configuration.GetConnectionString("AdminDatabase");
-builder.Services.AddDbContext<AdminDbContext>(options =>
-    options.UseMySql(adminConn, ServerVersion.AutoDetect(adminConn)));
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddTransient<TokenHandler>();
 
 // HttpClient para backend
 builder.Services.AddHttpClient("BackendAPI", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["BackendAPI:BaseUrl"] ?? "http://localhost:5289/");
     client.Timeout = TimeSpan.FromSeconds(30);
-});
+}).AddHttpMessageHandler<TokenHandler>();
 
 // Cookie Authentication
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -54,7 +51,30 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
+    pattern: "{controller=MtapiSettings}/{action=Index}/{id?}")
     .WithStaticAssets();
 
 app.Run();
+
+public class TokenHandler : DelegatingHandler
+{
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public TokenHandler(IHttpContextAccessor httpContextAccessor)
+    {
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        // Busca el JWT guardado en la sesión activa
+        var token = _httpContextAccessor.HttpContext?.User.FindFirst("SessionToken")?.Value;
+
+        if (!string.IsNullOrEmpty(token))
+        {
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        }
+
+        return await base.SendAsync(request, cancellationToken);
+    }
+}
